@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: winvt100.c 33 2023-12-17 01:30:12Z rhubarb-geek-nz $
+ * $Id: winvt100.c 35 2023-12-17 06:37:34Z rhubarb-geek-nz $
  */
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -527,8 +527,8 @@ int tty_winsize(int *cols,int *rows)
 
 		if (GetConsoleScreenBufferInfo(h,&info))
 		{
-			*cols=info.dwSize.X;
-			*rows=info.dwSize.Y;
+			*cols=info.dwMaximumWindowSize.X;
+			*rows=info.dwMaximumWindowSize.Y;
 			return 0;
 		}
 	}
