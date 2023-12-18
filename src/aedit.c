@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 37 2023-12-17 10:08:45Z rhubarb-geek-nz $
+ * $Id: aedit.c 38 2023-12-17 12:48:07Z rhubarb-geek-nz $
  */
 
 /*
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -172,7 +173,6 @@ static char r_string[max_cols];
 static int last_cmd;
 static char get_fname[PATH_MAX];
 
-
 static void find_cursor(void);
 static void ed_dump(long);
 static int ed_chr(long);
@@ -229,6 +229,61 @@ static int aedit_siginterrupt(int n,int flag)
 	return 0;
 }
 #endif
+
+static char *strjoin(char *fmt,...)
+{
+	int len=0;
+	int count=0;
+	char *retval=NULL;
+	int joint=strlen(fmt);
+
+	va_list ap;
+
+	va_start(ap,fmt);
+
+	while (1)
+	{
+		char *p=va_arg(ap,char *);
+
+		if (!p) break;
+
+		count++;
+		if (len) len+=joint;
+		len+=strlen(p);
+	}
+
+	va_end(ap);
+
+	if (count)
+	{
+		retval=malloc(len+1);
+		len=0;
+
+		va_start(ap,fmt);
+
+		while (count--)
+		{
+			char *p=va_arg(ap,char *);
+			int l=strlen(p);
+			if (len)
+			{
+				memcpy(retval+len,fmt,joint);
+				len+=joint;
+			}
+			if (l)
+			{
+				memcpy(retval+len,p,l);
+				len+=l;
+			}			
+		}
+
+		va_end(ap);
+
+		retval[len]=0;
+	}
+
+	return retval;
+}
 
 static int co_getch(void)
 {
@@ -332,7 +387,7 @@ int show_size=0;
 
 long page_start;
 
-static char filename[PATH_MAX];
+static char *filename;
 static int chars_per_line[max_lines];
 static char *clip_name="clipbrd.tmp";
 
@@ -2068,7 +2123,7 @@ static void show_status(void)
 		break;
 	default:
 		co_str(" ---- ");
-		if (filename[0]) 
+		if (filename) 
 		{
 			co_str(filename);
 		} 
@@ -2087,7 +2142,7 @@ static void show_status(void)
 				co_str("full");
 				reverse(0);
 			}*/
-			if (filename[0]) co_str(", ");
+			if (filename) co_str(", ");
 			if (show_size==2) 
 			{
 				co_str("saving...");
@@ -2152,7 +2207,12 @@ static int init(char *fname)
 	c=0;
 	while (c < total_lines) chars_per_line[c++]=total_cols;
 
-	filename[0]=0; 
+	if (filename)
+	{
+		free(filename);
+		filename=NULL; 
+	}
+
 	crsr_row=crsr_col=0;
 	cur_file.low_size=page_start=0L;
 	cur_file.high_size=0;
@@ -2165,7 +2225,7 @@ static int init(char *fname)
 
 	if (fname)
 	{
-		strcpy(filename,fname);
+		filename=strdup(fname);
 	}
 
 #ifdef CLEAR_SCREEN
@@ -2184,26 +2244,13 @@ static int init(char *fname)
 	show_status();
 	plot(0,0);
 	fflush(stdout);
-	if (!filename[0]) 
+
+	if (!filename) 
 	{
 		show_bottom(1);
 		fflush(stdout);
 		return 0;
 	}
-/*	else
-	{
-		struct stat s;
-		if (stat(filename,&s))
-		{
-			return 0;
-		}
-
-		if (ed_reserve((long)s.st_size))
-		{
-			return -1;
-		}
-	}
-*/
 
 	fptr=fopen(filename,"r");
 
@@ -3101,6 +3148,8 @@ static void save_select(char *file)
 	unsigned int i;
 	long p=ed_pos();
 
+	if ((file==NULL) || !file[0]) return;
+
 	if (sel_pos==ed_pos()) return;
 
 	if (sel_pos > ed_pos()) 
@@ -3169,8 +3218,8 @@ static char * enter_fname(char *fstr)
 	get_fname[i]=0;
 	if (!i) 
 	{
-		strcpy(get_fname,clip_name);
 		co_str(clip_name);
+		return clip_name;
 	}
 	return get_fname;
 }
@@ -3181,6 +3230,8 @@ static void do_get(char *file)
 	long p=ed_pos();
 	long i=0;
 	struct stat s;
+
+	if ((file==NULL) || !file[0]) return;
 
 	if (stat(file,&s))
 	{
@@ -3565,38 +3616,6 @@ static void update(void)
 	plot_cursor();
 }
 
-static int quit(void)
-{
-	mode='q';
-	menu_erased=1;
-	show_status();
-	plot_cursor();
-	fflush(stdout);
-
-	while (forever) 
-	{
-		switch (getkey()) 
-		{
-		case 'e':
-			update();
-		case 'a':
-			return 0;
-		case 'u':
-			update();
-			return 1;
-		case key_ins:
-		case escape:
-		case ctrl_z:
-			/*		case key_home: */
-			return 1;
-		case 'w':
-			break;
-		}
-	}
-
-	return -1;
-}
-
 static void my_atexit(void)
 {
 /*	fflush(stdout);*/
@@ -3635,19 +3654,9 @@ static void do_jump(long l)
 	plot_cursor();
 }
 
-#ifdef _WIN32
-#define HAVE_DRIVE
-#endif
-
 void do_shell(void)
 {
 	char *p=NULL;
-#ifdef HAVE_DRIVE
-	char dir[1024];
-	int drive=_getdrive();
-	dir[0]=0;
-	getcwd(dir,sizeof(dir));
-#endif
 
 	plot(menu_line,0);
 	clear_line();
@@ -3671,26 +3680,6 @@ void do_shell(void)
 	if (system(p))
 	{
 	}
-
-#ifdef HAVE_DRIVE
-	if (drive != -1)
-	{
-		if (_chdrive(drive))
-		{
-			perror("chdrive");
-			exit(1);
-		}
-	}
-
-	if (dir[0])
-	{
-		if (chdir(dir))
-		{
-			perror(dir);
-			exit(1);
-		}
-	}
-#endif
 
 	tty_raw(0);
 
@@ -3788,29 +3777,86 @@ static void ed_clos(void)
 		tmpname[0]=0;
 	}
 #endif
+	if (filename)
+	{
+		free(filename);
+		filename=NULL;
+	}
+}
+
+static int quit(void)
+{
+	mode='q';
+	menu_erased=1;
+	show_status();
+	plot_cursor();
+	fflush(stdout);
+
+	while (forever) 
+	{
+		switch (getkey()) 
+		{
+		case 'e':
+			update();
+		case 'a':
+			return 0;
+		case 'u':
+			update();
+			return 1;
+		case key_ins:
+		case escape:
+		case ctrl_z:
+			/*		case key_home: */
+			return 1;
+		case 'w':
+			{
+				char *fname=enter_fname("Write file - ");
+				menu_erased=1;
+				if (fname && fname[0] && (fname != clip_name))
+				{
+					write_file(fname);
+				}
+				show_status();
+				plot_cursor();
+				fflush(stdout);
+			}
+			break;
+		case 'i':
+			{
+				char *fname=enter_fname("Edit file - ");
+				menu_erased=1;
+				if (fname && fname[0] && (fname != clip_name))
+				{
+					ed_clos();
+					ed_init();
+					init(fname);
+					return 1;
+				}
+				else
+				{
+					show_status();
+					plot_cursor();
+					fflush(stdout);
+				}
+			}
+			break;
+		}
+	}
+
+	return -1;
 }
 
 int main(int argc,char **argv)
 {
-	int c,editing=0;
-	char *fn;
-	static char cn[256];
+	int editing=0;
+	char *fn=NULL;
 #ifdef HAVE_PWD_H
 	struct passwd *pw=getpwuid(getuid());
 
-	if (!pw) 
+	if (pw) 
 	{
-		perror("getpwuid");
-		return 1;
+		clip_name=strjoin("/",pw->pw_dir,".aedit.clp",NULL);
 	}
-
-	strcpy(cn,pw->pw_dir);
-	if (!strcmp(cn,"/"))
-	{
-		strcpy(cn,"/tmp");
-	}
-	strcat(cn,"/.aedit.clp");
-	clip_name=cn;
 #else
 #	ifdef _WIN32
 	const char *homedir=getenv("USERPROFILE");
@@ -3819,13 +3865,13 @@ int main(int argc,char **argv)
 #	endif
 	if (homedir)
 	{
-		strcpy(cn,homedir);
-#	ifdef _WIN32
-		strcat(cn,"\\.aedit.clp");
-#	else
-		strcat(cn,"/.aedit.clp");
-#	endif
-		clip_name=cn;
+		clip_name=strjoin(
+#ifdef _WIN32
+			"\\",
+#else
+			"/",
+#endif
+			homedir,".aedit.clp",NULL);
 	}
 #endif
 
@@ -3852,9 +3898,7 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-#ifdef HAVE_TERMIOS_H
 	atexit(my_atexit);
-#endif
 
 	if (tty_sz(0))
 	{
@@ -3883,7 +3927,10 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	fn=0;
+	if (total_lines > max_lines)
+	{
+		total_lines=max_lines;
+	}
 
 	while (--argc) 
 	{
@@ -3912,7 +3959,7 @@ int main(int argc,char **argv)
 			}
 		} 
 		else 
-			{
+		{
 			if (*arg=='+') 
 			{
 				while (*++arg) 
@@ -3935,13 +3982,15 @@ int main(int argc,char **argv)
 				}
 			} 
 			else 
-				{
+			{
 				fn=arg;
 			}
 		}
 	}
+
 	plot(0,0);
 	reverse(0);
+
 	if (!init(fn))
 	{
 		editing=1;
@@ -3949,6 +3998,7 @@ int main(int argc,char **argv)
 
 	while (editing) 
 	{
+		int c;
 		if (again) 
 		{
 			c='a';
