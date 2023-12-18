@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: termios.h 21 2022-06-30 20:53:56Z rhubarb-geek-nz $
+ * $Id: termios.h 33 2023-12-17 01:30:12Z rhubarb-geek-nz $
  */
 
 struct termios
@@ -53,7 +53,4 @@ void tty_putchar(int);
 int tty_kbhit(void);
 int tty_read(int,char *,int);
 
-
-
-
-
+int tty_winsize(int *cols,int *rows);

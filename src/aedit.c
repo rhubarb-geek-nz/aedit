@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 32 2023-12-16 23:30:52Z rhubarb-geek-nz $
+ * $Id: aedit.c 33 2023-12-17 01:30:12Z rhubarb-geek-nz $
  */
 
 /*
@@ -1077,6 +1077,18 @@ static int tty_sz(int fd)
 	}
 #endif /* TIOCGWINSZ */
 
+#ifdef _WIN32
+	{
+		int cols,rows;
+		if (!tty_winsize(&cols,&rows))
+		{
+			total_cols=cols;
+			total_lines=rows;
+			return 0;
+		}
+	}
+#endif
+
 #ifdef ANSI_SYS
 #	ifdef PLOT_CTRL
 	/* plot cursor at bottom right and ask for the position */
@@ -1116,9 +1128,17 @@ static int getkey(void)
 
 	if (winched)
 	{
+		int cols=total_cols;
+		int rows=total_lines;
 		winched=0;
-		tty_sz(0);
-		return ctrl_w;
+
+		if (!tty_sz(0))
+		{
+			if ((cols!=total_cols)||(rows!=total_lines))
+			{
+				return ctrl_w;
+			}
+		}
 	}
 
 	switch (k=co_getch()) 

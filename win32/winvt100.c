@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: winvt100.c 21 2022-06-30 20:53:56Z rhubarb-geek-nz $
+ * $Id: winvt100.c 33 2023-12-17 01:30:12Z rhubarb-geek-nz $
  */
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -515,4 +515,23 @@ if (info.wAttributes & BACKGROUND_INTENSITY) w|=FOREGROUND_INTENSITY;
 			}
 		}
 	}
+}
+
+int tty_winsize(int *cols,int *rows)
+{
+	HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
+
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO info;
+
+		if (GetConsoleScreenBufferInfo(h,&info))
+		{
+			*cols=info.dwSize.X;
+			*rows=info.dwSize.Y;
+			return 0;
+		}
+	}
+
+	return -1;
 }
