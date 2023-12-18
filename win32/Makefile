@@ -16,17 +16,20 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 46 2023-12-18 16:44:00Z rhubarb-geek-nz $
+#  $Id: Makefile 47 2023-12-18 19:19:31Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c tmpfile.c
 CL=cl
 OBJDIR=obj\$(VSCMD_ARG_TGT_ARCH)
 BINDIR=bin\$(VSCMD_ARG_TGT_ARCH)
+BUNDLE=bundle
+RESFILE=$(OBJDIR)\aedit.res
 APP=$(BINDIR)\aedit.exe
 MSI=aedit-$(DEPVERS_aedit_STR4)-$(VSCMD_ARG_TGT_ARCH).msi
-RESFILE=$(OBJDIR)\aedit.res
+MSIX=$(BUNDLE)\aedit-$(DEPVERS_aedit_STR4)-$(VSCMD_ARG_TGT_ARCH).msix
+MSIXBUNDLE=aedit-$(DEPVERS_aedit_STR4).msixbundle
 
-all: $(APP) $(MSI)
+all: $(APP) $(MSI) $(MSIX)
 	
 clean: 
 	if exist $(APP) del $(APP)
@@ -62,7 +65,7 @@ $(APP): $(SRC) $(OBJDIR) $(BINDIR) $(RESFILE)
 $(RESFILE): aedit.rc
 	rc /r $(RCFLAGS) "/DDEPVERS_aedit_INT4=$(DEPVERS_aedit_INT4)" "/DDEPVERS_aedit_STR4=\"$(DEPVERS_aedit_STR4)\"" /fo$@ aedit.rc
 
-$(OBJDIR) $(BINDIR): 
+$(OBJDIR) $(BINDIR) $(BUNDLE):
 	mkdir $@
 
 $(MSI): $(APP)
@@ -71,3 +74,14 @@ $(MSI): $(APP)
 	del "$(VSCMD_ARG_TGT_ARCH).wixobj"
 	del "aedit-$(DEPVERS_aedit_STR4)-$(VSCMD_ARG_TGT_ARCH).wixpdb"
 	signtool sign /sha1 "$(CertificateThumbprint)" /fd SHA256 /t http://timestamp.digicert.com $@
+
+$(MSIX): $(BUNDLE) $(APP)
+	COPY /Y $(APP)
+	DIR aedit.exe
+	makeappx pack /m AppxManifest.xml /f mapping.ini /p $@
+	DEL aedit.exe
+	signtool sign /sha1 "$(BundleThumbprint)" /fd SHA256 /t http://timestamp.digicert.com $@
+
+$(MSIXBUNDLE):
+	makeappx bundle /d $(BUNDLE) /p $@
+	signtool sign /sha1 "$(BundleThumbprint)" /fd SHA256 /t http://timestamp.digicert.com $@

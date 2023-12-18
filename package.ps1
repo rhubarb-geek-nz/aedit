@@ -17,10 +17,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 46 2023-12-18 16:44:00Z rhubarb-geek-nz $
+#  $Id: package.ps1 47 2023-12-18 19:19:31Z rhubarb-geek-nz $
 
 param(
-	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F'
+	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
+	$BundleThumbprint = '5F88DFB53180070771D4507244B2C9C622D741F8'
 )
 
 $ErrorActionPreference = "Stop"
@@ -175,7 +176,7 @@ if ($IsWindows)
 
 	$Win32Dir = $PWD
 
-	foreach ($DIR in 'obj', 'bin')
+	foreach ($DIR in 'obj', 'bin', 'bundle')
 	{
 		if (Test-Path -LiteralPath $DIR)
 		{
@@ -192,12 +193,25 @@ if ($IsWindows)
 
 			$VersionInt4=$Version.Replace(".",",")
 
+			$xmlDoc = [System.Xml.XmlDocument](Get-Content "Package.appxmanifest")
+
+			$nsMgr = New-Object -TypeName System.Xml.XmlNamespaceManager -ArgumentList $xmlDoc.NameTable
+
+			$nsmgr.AddNamespace("man", "http://schemas.microsoft.com/appx/manifest/foundation/windows10")
+
+			$xmlNode = $xmlDoc.SelectSingleNode("/man:Package/man:Identity", $nsmgr)
+
+			$xmlNode.ProcessorArchitecture = $ARCH
+			$xmlNode.Version = $Version
+
+			$xmlDoc.Save("$Win32Dir\AppxManifest.xml")
+
 			@"
 CALL "$VCVARS"
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
 NMAKE /NOLOGO clean
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
-NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint"
+NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint"
 EXIT %ERRORLEVEL%
 "@ | & "$env:COMSPEC"
 
@@ -205,6 +219,41 @@ EXIT %ERRORLEVEL%
 			{
 				exit $LastExitCode
 			}
+		}
+
+		@"
+CALL "$VCVARSDIR\$VCVARSHOST"
+IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
+NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint" "aedit-$Version.msixbundle"
+EXIT %ERRORLEVEL%
+"@ | & "$env:COMSPEC"
+
+		if ($LastExitCode -ne 0)
+		{
+			exit $LastExitCode
+		}
+
+		$stream = New-Object System.IO.FileStream -ArgumentList "$Win32Dir\aedit-$Version.zip", Create, Write
+
+		try
+		{
+			$archive = New-Object System.IO.Compression.ZipArchive -ArgumentList $stream, Create, $true
+
+			try
+			{
+				$ARCHLIST | ForEach-Object {
+					$ARCH = $_
+					$null = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, "$Win32Dir\bin\$ARCH\aedit.exe", "$ARCH/aedit.exe", [System.IO.Compression.CompressionLevel]::Fastest)
+				}
+			}
+			finally
+			{
+				$archive.Dispose()
+			}
+		}
+		finally
+		{
+			$stream.Dispose()
 		}
 	}
 	finally
