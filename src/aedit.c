@@ -2,7 +2,7 @@
  *
  *  Copyright 1989-2012, Roger Brown
  *
- *  This file is part of Roger Brown's Toolkit.
+ *  This file is part of Roger Brown's Aedit.
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU Lesser General Public License as published by the
@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 6 2021-05-06 21:09:19Z rhubarb-geek-nz $
+ * $Id: aedit.c 29 2023-12-16 14:43:44Z rhubarb-geek-nz $
  */
 
 /*
@@ -60,13 +60,9 @@
 #	define TEMP_FP
 #	define tmpfile aedit_tmpfile
 extern FILE *tmpfile(void);
-
 #else /* _WIN32 */
-#	ifdef __SC__
-#	else /* __SC__ */
-#		include <unistd.h>
-#		define HAVE_PWD_H
-#	endif /* __SC__ */
+#	include <unistd.h>
+#	define HAVE_PWD_H
 #endif /* _WIN32 */
 
 #ifdef HAVE_PWD_H
@@ -98,27 +94,7 @@ char sig[]="@(#)aedit 2.0";
 #	define ADBG_LEN(len)
 #endif
 
-#if defined(__STDC__) || defined(_MSC_VER)
-#	define VOID_RETURN			void
-#	define RETURN_NOTHING		return;
-#	define USE_PROTOTYPES
-#	define VOID_ARGS			(void)
-#	define ARGS_PROTOTYPE(x)	x
-#else
-#	define VOID_RETURN		
-#	define RETURN_NOTHING		return 0;
-#	define VOID_ARGS			()
-#	define ARGS_PROTOTYPE		()
-#endif
-
-#ifdef __SC__
-#	define HAVE_DISP_H
-#	define TEMP_FP
-#endif
-
 #ifdef _WIN32
-/* #define TEMP_FP*/
-/* #define HAVE_DISP_H */
 #	define HAVE_TERMIOS_H
 #endif
 
@@ -132,27 +108,11 @@ char sig[]="@(#)aedit 2.0";
 /* #define SCROLL_RGN*/
 #endif
 
-#ifdef HAVE_DISP_H
-#	include <disp.h>
-#	ifdef putchar
-#		undef putchar
-#	endif
-#	define putchar(x)    disp_putc(x)
-#else /* HAVE_DISP_H */
-#	ifdef HAVE_TERMIOS_H
-#		include <termios.h>
-#	else /* HAVE_TERMIOS_ */
-#		include <sgtty.h>
-#	endif /* HAVE_TERMIOS */
-#endif /* HAVE_DISP_H */
-
-#if !defined(__STDC__) && !defined(_WIN32)
-char *malloc();
-char *getenv();
-char *strcpy();
-char *strcat();
-struct passwd *getpwuid();
-#endif
+#ifdef HAVE_TERMIOS_H
+#	include <termios.h>
+#else /* HAVE_TERMIOS_ */
+#	include <sgtty.h>
+#endif /* HAVE_TERMIOS */
 
 #ifndef SEEK_SET
 #	define SEEK_SET    0
@@ -213,32 +173,20 @@ static int last_cmd;
 static char get_fname[PATH_MAX];
 
 
-static VOID_RETURN find_cursor VOID_ARGS;
-static VOID_RETURN ed_dump ARGS_PROTOTYPE((long));
-static int ed_chr ARGS_PROTOTYPE((long));
-static int ed_reserve ARGS_PROTOTYPE((long));
+static void find_cursor(void);
+static void ed_dump(long);
+static int ed_chr(long);
+static int ed_reserve(long);
 
-static int getkey VOID_ARGS;
+static int getkey(void);
 
-#ifdef HAVE_DISP_H
-static int co_getch VOID_ARGS
-{
-	disp_flush();
-	return _getch();
-}
-#else /* HAVE_DISP_H */
 #ifdef _WIN32
 #else /* _WIN32 */
 #define tty_read(x,y,z)   read(x,y,z)
 #endif /* _WIN32 */
 
 int winched;
-#if defined(__STDC__) || defined(_WIN32)
 void winch(int i)
-#else
-void winch(i)
-int i;
-#endif
 {
 	winched++;		/* acknowledge */
 	if (i)
@@ -250,12 +198,7 @@ int i;
 #ifdef HAVE_SIGINTERRUPT
 #	define aedit_siginterrupt(n,f) 	siginterrupt(n,f)
 #else
-static int aedit_siginterrupt
-#	if defined(__STDC__) || defined(_WIN32)
-	(int n,int flag)
-#	else
-	(n,flag) int n,flag;
-#	endif
+static int aedit_siginterrupt(int n,int flag)
 {
 #ifdef SA_RESTART
 	struct sigaction sa;
@@ -287,7 +230,7 @@ static int aedit_siginterrupt
 }
 #endif
 
-static int co_getch VOID_ARGS
+static int co_getch(void)
 {
 	while (forever)
 	{
@@ -323,15 +266,9 @@ static int co_getch VOID_ARGS
 
 	return -1;
 }
-#endif /* HAVE_DISP_H */
 
 #if defined(HAVE_TERMIOS_H) && !defined(HAVE_CFMAKERAW)
-static VOID_RETURN cfmakeraw
-#ifdef USE_PROTOTYPES
-(struct termios *tt)
-#else
-(tt) struct termios *tt;
-#endif
+static void cfmakeraw(struct termios *tt)
 {
 	tt->c_iflag=0;
 	tt->c_oflag&=~OPOST;
@@ -349,20 +286,16 @@ static VOID_RETURN cfmakeraw
 
 int guessing;
 
-#ifdef HAVE_DISP_H
-int def_attr=7;
-#else /* HAVE_DISP_H */
-#	ifdef QNX
+#ifdef QNX
 int stdin_option;
-#	else /* QNX */
-#		ifdef HAVE_TERMIOS_H
+#else /* QNX */
+#	ifdef HAVE_TERMIOS_H
 static struct termios tty_mode;
-#		else /* HAVE_TERMIOS_H */
+#	else /* HAVE_TERMIOS_H */
 static long old_flags;
 struct sgttyb temp_mode;
-#		endif /* HAVE_TERMIOS_H */
-#	endif /* QNX */
-#endif /* HAVE_DISP_H */
+#	endif /* HAVE_TERMIOS_H */
+#endif /* QNX */
 
 
 #ifdef HAVE_TERMIOS_H
@@ -446,19 +379,8 @@ struct ed_file
 char tmpname[1024];
 #endif
 
-static int tty_raw
-#ifdef USE_PROTOTYPES
-(int fd)
-#else
-(fd) int fd;
-#endif
+static int tty_raw(int fd)
 {
-#ifdef HAVE_DISP_H
-	disp_open();
-	disp_usebios();
-	def_attr=disp_getattr();
-	wordwrap=!disp_nowrap;
-#else
 #	ifdef QNX
 	set_option(stdin,((stdin_option=get_option(stdin))&~(EDIT|ECHO)));
 #	else /* QNX */
@@ -478,21 +400,10 @@ static int tty_raw
 	return ioctl(fd,TIOCSETP,(char *)&temp_mode);
 #		endif /* HAVE_TERMIOS_H */
 #	endif /* QNX */
-#endif /* HAVE_DISP_H */
 }
 
-static int tty_reset
-#ifdef USE_PROTOTYPES
-(int fd)
-#else
-(fd) int fd;
-#endif
+static int tty_reset(int fd)
 {
-#ifdef HAVE_DISP_H
-	disp_flush();
-	disp_close();
-	return 0;
-#else
 #ifdef QNX
 	return set_option(stdin,stdin_option);
 #else /* QNX */
@@ -503,25 +414,19 @@ static int tty_reset
     return ioctl(fd,TIOCSETP,(char *)&temp_mode);	
 #endif /* HAVE_TERMIOS_H */
 #endif /* QNX */
-#endif
 }
 
-static long ed_len VOID_ARGS
+static long ed_len(void)
 {
 	return cur_file.low_size+cur_file.high_size+cur_file.t_lol+cur_file.t_hil;
 }
 
-static long ed_room VOID_ARGS
+static long ed_room(void)
 {
 	return cur_file.buf_size-cur_file.low_size-cur_file.high_size;
 }
 
-static VOID_RETURN ed_seek
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static void ed_seek(long p)
 {
 	long q;
 #ifdef TEMP_FP
@@ -539,12 +444,7 @@ static VOID_RETURN ed_seek
 	}
 }
 
-static VOID_RETURN ed_read
-#ifdef USE_PROTOTYPES
-(char *p,long l)
-#else
-(p,l) char *p; long l;
-#endif
+static void ed_read(char *p,long l)
 {
 	size_t len=l;
 
@@ -569,7 +469,7 @@ static VOID_RETURN ed_read
 	}
 }
 
-static VOID_RETURN ed_tzap VOID_ARGS
+static void ed_tzap(void)
 {
 	cur_file.t_capos=0;
 	cur_file.t_calen=0;
@@ -579,12 +479,7 @@ static VOID_RETURN ed_tzap VOID_ARGS
 #endif
 }
 
-static VOID_RETURN ed_write
-#ifdef USE_PROTOTYPES
-(char *p,long l)
-#else
-(p,l) char *p; long l;
-#endif
+static void ed_write(char *p,long l)
 {
 	size_t len=l;
 
@@ -618,13 +513,7 @@ static VOID_RETURN ed_write
 #endif
 }
 
-static VOID_RETURN ed_fclr
-#ifdef USE_PROTOTYPES
-(long pos,long len)
-#else
-(pos,len)
-long pos,len;
-#endif
+static void ed_fclr(long pos,long len)
 {
 	char buf[256];
 	char *p=buf;
@@ -646,12 +535,7 @@ long pos,len;
 	}
 }
 
-static VOID_RETURN ed_load
-#ifdef USE_PROTOTYPES
-(long l)
-#else
-(l) long l;
-#endif
+static void ed_load(long l)
 {
 	if (l)
 	{
@@ -732,12 +616,7 @@ static VOID_RETURN ed_load
 	}
 }
 
-static int ed_at
-#ifdef USE_PROTOTYPES
-(long pos)
-#else
-(pos) long pos;
-#endif
+static int ed_at(long pos)
 {
 	long off=pos;
 	int c=EOF;
@@ -807,12 +686,7 @@ static int ed_at
 	return c;
 }
 
-static int ed_chr
-#ifdef USE_PROTOTYPES
-(long off)
-#else
-(off) long off;
-#endif
+static int ed_chr(long off)
 {
 	long mask=sizeof(cur_file.t_cache);
 	mask--;
@@ -848,13 +722,7 @@ static int ed_chr
 	return EOF;
 }
 
-static VOID_RETURN ed_del
-#ifdef USE_PROTOTYPES
-(long hwmany)
-#else
-(hwmany)
-long hwmany;
-#endif
+static void ed_del(long hwmany)
 {
 	ADBG_DEL(hwmany)
 
@@ -899,12 +767,7 @@ long hwmany;
 	}
 }
 
-static VOID_RETURN ed_ins
-#ifdef USE_PROTOTYPES
-(int ch)
-#else
-(ch) int ch;
-#endif
+static void ed_ins(int ch)
 {
 	/* add character at cursor position */
 
@@ -946,12 +809,7 @@ static VOID_RETURN ed_ins
 	}
 }
 
-static VOID_RETURN ed_dump
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static void ed_dump(long p)
 {
 	/* move bytes out of buffer into file,
 		-v means low part, +ve means high part */
@@ -1090,17 +948,12 @@ static VOID_RETURN ed_dump
 	}
 }
 
-static long ed_pos VOID_ARGS
+static long ed_pos(void)
 {
 	return cur_file.low_size+cur_file.t_lol;
 }
 
-static VOID_RETURN ed_seof
-#ifdef USE_PROTOTYPES
-(long l)
-#else
-(l) long l;
-#endif
+static void ed_seof(long l)
 {
 	while (forever)
 	{
@@ -1144,12 +997,7 @@ static VOID_RETURN ed_seof
 	}
 }
 
-static int ed_reserve
-#ifdef USE_PROTOTYPES
-(long l)
-#else
-(l) long l;
-#endif
+static int ed_reserve(long l)
 {
 	ed_tzap();
 
@@ -1208,29 +1056,14 @@ static int ed_reserve
 	return 0;
 }
 
-static VOID_RETURN co_puts
-#ifdef USE_PROTOTYPES
-(char *p)
-#else
-(p) char *p;
-#endif
+static void co_puts(char *p)
 {
 	while (*p) putchar(*p++);
 }
 
-static int tty_sz
-#ifdef USE_PROTOTYPES
-(int fd)
-#else
-(fd) int fd;
-#endif
+static int tty_sz(int fd)
 {
-#ifdef HAVE_DISP_H
-	total_cols=disp_numcols;
-	total_lines=disp_numrows;
-	return 0;
-#else /* HAVE_DISP_H */
-#	ifdef TIOCGWINSZ
+#ifdef TIOCGWINSZ
 	struct winsize ws;
 	ws.ws_row=ws.ws_col=0;
 	if (!ioctl(fd,TIOCGWINSZ,&ws))
@@ -1242,10 +1075,10 @@ static int tty_sz
 			return 0;
 		}
 	}
-#	endif /* TIOCGWINSZ */
+#endif /* TIOCGWINSZ */
 
-#	ifdef ANSI_SYS
-#		ifdef PLOT_CTRL
+#ifdef ANSI_SYS
+#	ifdef PLOT_CTRL
 	/* plot cursor at bottom right and ask for the position */
 /*	co_puts("\033[127;127H\033[6n");*/
 	guessing=1;
@@ -1255,12 +1088,12 @@ static int tty_sz
 	{
 		return 0;
 	}
-#		endif /* PLOT_CTRL */
-#	else /* ANSI_SYS */
-#		ifdef _WIN32
+#	endif /* PLOT_CTRL */
+#else /* ANSI_SYS */
+#	ifdef _WIN32
 	co_puts("\033[?2l");
 	total_lines=25;
-#		endif /* _WIN32 */
+#	endif /* _WIN32 */
 	guessing=1;
 	co_puts("\033Z");
 	fflush(stdout);
@@ -1268,13 +1101,12 @@ static int tty_sz
 	{
 		return 0;
 	}
-#	endif /* ANSI_SYS */
-#endif /* HAVE_DISP_H */
+#endif /* ANSI_SYS */
 
 	return -1;
 }
 
-static int getkey VOID_ARGS
+static int getkey(void)
 {
 	int k;
 
@@ -1524,12 +1356,7 @@ static int getkey VOID_ARGS
 	return k;
 }
 
-static VOID_RETURN co
-#ifdef USE_PROTOTYPES
-(int c)
-#else
-(c) int c;
-#endif
+static void co(int c)
 {
 	int i;
 	switch (c) 
@@ -1566,9 +1393,6 @@ static VOID_RETURN co
 			{
 				tty_col=last_col;
 			}
-#ifdef HAVE_DISP_H
-			disp_move(tty_row,tty_col);
-#endif
 		}
 		break;
 	}
@@ -1586,22 +1410,12 @@ static VOID_RETURN co
 	}
 }
 
-static VOID_RETURN co_str
-#ifdef USE_PROTOTYPES
-(char *p)
-#else
-(p) char *p;
-#endif
+static void co_str(char *p)
 {
 	while (*p) co(*p++);
 }
 
-static int next_tab
-#ifdef USE_PROTOTYPES
-(int i)
-#else
-(i) int i;
-#endif
+static int next_tab(int i)
 {
 	i/=tabs;
 	i++;
@@ -1609,12 +1423,7 @@ static int next_tab
 	return i;
 }
 
-static int next_col
-#ifdef USE_PROTOTYPES
-(int c,int ch)
-#else
-(c,ch) int c,ch;
-#endif
+static int next_col(int c,int ch)
 {
 	if (ch==nl) return 0;
 	if (ch==tab) return next_tab(c);
@@ -1625,12 +1434,7 @@ static int next_col
 	return (c+1);
 }
 
-static char *sprintn
-#ifdef USE_PROTOTYPES
-(long u,char *p)
-#else
-(u,p) long u; char *p;
-#endif
+static char *sprintn(long u,char *p)
 {
 	long v;
 
@@ -1642,24 +1446,14 @@ static char *sprintn
 	return p;
 }
 
-static VOID_RETURN printn
-#ifdef USE_PROTOTYPES
-(long u)
-#else
-(u) long u;
-#endif
+static void printn(long u)
 {
 	char buf[10];
 	sprintn(u,buf);
 	co_str(buf);
 }
 
-static VOID_RETURN reverse
-#ifdef USE_PROTOTYPES
-(int i)
-#else
-(i) int i;
-#endif
+static void reverse(int i)
 {
 	if (!(rev_on | i)) return;
 
@@ -1667,18 +1461,6 @@ static VOID_RETURN reverse
 
 	rev_on=i;
 #ifdef REVERSE
-#ifdef HAVE_DISP_H
-	if (i)
-	{
-/*		disp_setattr(((def_attr & 0xf)<<4)+(0xf & (def_attr >> 4)));*/
-		disp_startstand();
-	}
-	else
-	{
-		disp_endstand();
-/*		disp_setattr(def_attr);*/
-	}
-#else /* HAVE_DISP_H */
 #ifdef ANSI_SYS
 	if (i) 
 	{
@@ -1698,7 +1480,6 @@ static VOID_RETURN reverse
 		co_puts("\033)");
 	}
 #endif /* ANSI_SYS */
-#endif /* HAVE_DISP_H */
 #else /* REVERSE */
 	if (rev_on==3) 
 	{
@@ -1707,7 +1488,7 @@ static VOID_RETURN reverse
 #endif /* REVERSE */
 }
 
-static VOID_RETURN clear_line VOID_ARGS
+static void clear_line(void)
 {
 	int rev,i,j,k;
 
@@ -1727,15 +1508,11 @@ static VOID_RETURN clear_line VOID_ARGS
 #ifdef ERASE_LINE
 	if (i) 
 	{
-#ifdef HAVE_DISP_H
-		disp_fillbox((def_attr << 8)+' ',k,j,k,last_col);
-#else /* HAVE_DISP_H */
 #ifdef ANSI_SYS
 		co_puts("\033[K");
 #else /* ANSI_SYS */
 		co_puts("\033K");
 #endif /* ANSI_SYS */
-#endif /* HAVE_DISP_H */
 	}
 #else /* ERASE_LINE */
 	while (i--) co(' ');
@@ -1747,18 +1524,8 @@ static VOID_RETURN clear_line VOID_ARGS
 }
 
 #ifdef PLOT_CTRL
-static VOID_RETURN plot_ctrl
-#ifdef USE_PROTOTYPES
-(int r,int c)
-#else
-(r,c)
-int r,c;
-#endif
+static void plot_ctrl(int r,int c)
 {
-#ifdef HAVE_DISP_H
-	disp_move(r,c);
-	disp_flush();
-#else /* HAVE_DISP_H */
 	char plot_buf[20];
 #ifdef ANSI_SYS
 	char num_buf[10];
@@ -1780,7 +1547,6 @@ int r,c;
 	*p=0;
 #endif /* ANSI_SYS */
 	co_puts(plot_buf);
-#endif /* HAVE_DISP_H */
 	tty_row=r; 
 	tty_col=c;
 }
@@ -1822,12 +1588,7 @@ int r,c;
 }
 #endif
 
-static VOID_RETURN plot
-#ifdef USE_PROTOTYPES
-(int r,int c)
-#else
-(r,c) int r,c;
-#endif
+static void plot(int r,int c)
 {
 	if ((tty_row==r)&(tty_col==c)) return;
 
@@ -1852,12 +1613,7 @@ static VOID_RETURN plot
 #endif /* PLOT_CTRL */
 }
 
-static VOID_RETURN show_block
-#ifdef USE_PROTOTYPES
-(long q,long i,int endrow)
-#else
-(q,i,endrow) long q,i; int endrow;
-#endif
+static void show_block(long q,long i,int endrow)
 {
 	if (row >= endrow) return;
 
@@ -1907,12 +1663,7 @@ static VOID_RETURN show_block
 	}
 }
 
-static VOID_RETURN show_text
-#ifdef USE_PROTOTYPES
-(long pos,long len,int endrow)
-#else
-(pos,len,endrow) long pos,len; int endrow;
-#endif
+static void show_text(long pos,long len,int endrow)
 {
 	long inv_start,inv_end,k,l;
 
@@ -1946,7 +1697,7 @@ static VOID_RETURN show_text
 	if (l) show_block(inv_end,l,endrow);
 }
 
-static VOID_RETURN show_top VOID_ARGS
+static void show_top(void)
 {
 	row=col=0;
 	plot(row,col);
@@ -1955,12 +1706,7 @@ static VOID_RETURN show_top VOID_ARGS
 	crsr_col=col;
 }
 
-static VOID_RETURN show_bottom
-#ifdef USE_PROTOTYPES
-(int erase_after)
-#else
-(erase_after) int erase_after;
-#endif
+static void show_bottom(int erase_after)
 {
 	plot(row=crsr_row,col=crsr_col);
 	show_text(ed_pos(),ed_len()-ed_pos(),status_line);
@@ -1986,12 +1732,7 @@ static VOID_RETURN show_bottom
 	fflush(stdout);
 }
 
-static VOID_RETURN scan_pos
-#ifdef USE_PROTOTYPES
-(long i)
-#else
-(i) long i;
-#endif
+static void scan_pos(long i)
 {
 	long p=page_start;
 	row=col=0;
@@ -2019,12 +1760,7 @@ static VOID_RETURN scan_pos
 	}
 }
 
-static VOID_RETURN paint_text
-#ifdef USE_PROTOTYPES
-(long len)
-#else
-(len) long len;
-#endif
+static void paint_text(long len)
 {
 	long i;
 
@@ -2047,12 +1783,7 @@ static VOID_RETURN paint_text
 	}
 }
 
-static VOID_RETURN ed_fmove
-#ifdef USE_PROTOTYPES
-(long i)
-#else
-(i) long i;
-#endif
+static void ed_fmove(long i)
 {
 #ifdef _DEBUG
 	if (cur_file.low_size+cur_file.high_size)
@@ -2141,12 +1872,7 @@ static VOID_RETURN ed_fmove
 	}
 }
 
-static VOID_RETURN ed_move
-#ifdef USE_PROTOTYPES
-(long i)
-#else
-(i) long i;
-#endif
+static void ed_move(long i)
 {
 	/* if +ve add text to lower section, else move to upper half */
 
@@ -2241,12 +1967,7 @@ static VOID_RETURN ed_move
 	}
 }
 
-static VOID_RETURN show_mopt
-#ifdef USE_PROTOTYPES
-(char **list,int opt)
-#else
-(list,opt) char **list; int opt;
-#endif
+static void show_mopt(char **list,int opt)
 {
 int i=0;
 int pm=0;
@@ -2307,7 +2028,7 @@ char *menu_d[]={"Again","Block","Code","Delete","Find","-find","Get","Insert","J
 char *menu_b[]={"Buffer","Copy","Delete","Put",NULL};
 char *menu_q[]={"Abort","Exit","Init","Update","Write",NULL};
 
-static VOID_RETURN show_status VOID_ARGS
+static void show_status(void)
 {
 #if defined(_WIN32) && defined(_M_IX86)
 /*	if (!menu_erased)
@@ -2389,31 +2110,20 @@ static VOID_RETURN show_status VOID_ARGS
 	clear_line();
 }
 
-static VOID_RETURN cls VOID_ARGS
+static void cls(void)
 {
 	int i;
-#ifdef HAVE_DISP_H
-	disp_fillbox((def_attr << 8)+' ',0,0,status_line,last_col);
-	disp_move(0,0);
-	disp_flush();
-#else
 #ifdef ANSI_SYS
 	co_puts("\033[H\033[2J");
 #else
 	co_puts("\033H\033J");
-#endif
 #endif
 	tty_row=tty_col=i=0;
 	while (i < total_lines) chars_per_line[i++]=0;
 	menu_erased=1;
 }
 
-static int init
-#ifdef USE_PROTOTYPES
-(char *fname)
-#else
-(fname) char *fname;
-#endif
+static int init(char *fname)
 {
 	FILE *fptr;
 	int c;
@@ -2436,21 +2146,6 @@ static int init
 	{
 		strcpy(filename,fname);
 	}
-
-#ifdef HAVE_DISP_H
-#ifdef _WIN32
-	{
-		char title[256];
-		strcpy(title,"aedit");
-		if (filename[0])
-		{
-			strcat(title," - ");
-			strcat(title,filename);
-		}
-		disp_title(title);
-	}
-#endif
-#endif
 
 #ifdef CLEAR_SCREEN
 	cls();
@@ -2537,17 +2232,12 @@ static int init
 	return 0;
 }      
 
-static VOID_RETURN plot_cursor VOID_ARGS
+static void plot_cursor(void)
 {
 	plot(crsr_row,crsr_col);
 }
 
-static VOID_RETURN write_file
-#ifdef USE_PROTOTYPES
-(char *fn)
-#else
-(fn) char *fn;
-#endif
+static void write_file(char *fn)
 {
 #ifdef _DEBUG
 	long i=ed_len();
@@ -2634,7 +2324,7 @@ home()
 #endif
 
 
-static VOID_RETURN move_right VOID_ARGS
+static void move_right(void)
 {
 	if (ed_pos()!=ed_len()) 
 	{
@@ -2643,7 +2333,7 @@ static VOID_RETURN move_right VOID_ARGS
 	}
 }
 
-static VOID_RETURN move_left VOID_ARGS
+static void move_left(void)
 {
 	if (ed_pos()) 
 	{
@@ -2652,7 +2342,7 @@ static VOID_RETURN move_left VOID_ARGS
 	}
 }
 
-static VOID_RETURN show_line VOID_ARGS
+static void show_line(void)
 {
 	long p=ed_pos();
 	long i,j;
@@ -2677,12 +2367,7 @@ static VOID_RETURN show_line VOID_ARGS
 
 /* upto CR but not including it */
 
-static long line_len
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long line_len(long p)
 {
 	long i=0;
 	long j=ed_len()-p;
@@ -2700,7 +2385,7 @@ static long line_len
 	return i;
 }
 
-static VOID_RETURN delete_char VOID_ARGS
+static void delete_char(void)
 {
 	int new_line=0;
 	long pos=ed_pos();
@@ -2755,12 +2440,7 @@ static VOID_RETURN delete_char VOID_ARGS
 	}
 }
 
-static long sl_phys
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long sl_phys(long p)
 {
 	/* this returns the start of this line by going back to a previous CR */
 	while (p)
@@ -2778,12 +2458,7 @@ static long sl_phys
 	return p;
 }
 
-static long sl_prev
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long sl_prev(long p)
 {
 	/* previous actual line start */
 
@@ -2799,12 +2474,7 @@ static long sl_prev
 	return p;
 }
 
-static long next_log
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long next_log(long p)
 {
 	/* find next line either by start of newline, or wrapped the columns */
 	int c=0;
@@ -2825,12 +2495,7 @@ static long next_log
 	return p;
 }
 
-static long prev_log
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long prev_log(long p)
 {
 	/* previous line as seen on the VDU */
 	long l=sl_prev(p);
@@ -2851,12 +2516,7 @@ static long prev_log
 	return l;
 }
 
-static long sl_this
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static long sl_this(long p)
 {
 	long q=sl_phys(p);
 	int col=0;
@@ -2885,12 +2545,7 @@ static long sl_this
 	return m;
 }
 
-static int col_at
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static int col_at(long p)
 {
 	long q=sl_this(p);
 	int col=0;
@@ -2907,12 +2562,7 @@ static int col_at
 }
 
 #ifdef NEED_ROW_AT
-static int row_at
-#ifdef USE_PROTOTYPES
-(long p)
-#else
-(p) long p;
-#endif
+static int row_at(long p)
 {
 	int row=0;
 	int col=0;
@@ -2941,7 +2591,7 @@ static int row_at
 }
 #endif
 
-VOID_RETURN repage VOID_ARGS
+void repage(void)
 {
 	int r=5;
 	page_start=ed_pos();
@@ -2966,14 +2616,10 @@ VOID_RETURN repage VOID_ARGS
 scrol_up()
 {
 	int i;
-#ifdef HAVE_DISP_H
-	disp_scroll(1,0,0,last_text,last_col,def_attr);
-#else /* HAVE_DISP_H */
 	scrol_rgn(0,last_text);
 	plot_ctrl(last_text,0);
 	co_puts("\033E"); /* next line */
 	scrol_rgn(0,menu_line);
-#endif /* HAVE_DISP_H */
 	plot_ctrl(last_text,0);
 	i=0;
 	while (i < last_text)
@@ -2987,14 +2633,10 @@ scrol_up()
 scrol_down()
 {
 	int i;
-#ifdef HAVE_DISP_H
-	disp_scroll(-1,0,0,last_text,last_col,def_attr);
-#else /* HAVE_DISP_H */
 	scrol_rgn(0,last_text);
 	plot_ctrl(0,0);
 	co_puts("\033M");
 	scrol_rgn(0,menu_line);
-#endif
 	plot_ctrl(0,0);
 	i=last_text;
 	while (i--)
@@ -3005,7 +2647,7 @@ scrol_down()
 }
 #endif
 
-static VOID_RETURN find_cursor()
+static void find_cursor()
 {
 	if (page_start > ed_pos()) 
 	{
@@ -3122,7 +2764,7 @@ static VOID_RETURN find_cursor()
 	}
 }
 
-static VOID_RETURN move_up VOID_ARGS
+static void move_up(void)
 {
 	long i;
 	long p;
@@ -3162,7 +2804,7 @@ static VOID_RETURN move_up VOID_ARGS
 	if (sel_on) paint_text(-i);
 }
 
-static VOID_RETURN move_end VOID_ARGS
+static void move_end(void)
 {
 	long p=ed_pos();
 	long i=ed_len()-p;
@@ -3179,7 +2821,7 @@ static VOID_RETURN move_end VOID_ARGS
 	if (sel_on) paint_text(-j);
 }
 
-static VOID_RETURN move_home VOID_ARGS
+static void move_home(void)
 {
 	long j=sl_this(ed_pos());
 	long k=ed_pos()-j;
@@ -3188,7 +2830,7 @@ static VOID_RETURN move_home VOID_ARGS
 	if (sel_on) paint_text(k);
 }
 
-static VOID_RETURN move_down VOID_ARGS
+static void move_down(void)
 {
 	long p=ed_pos();
 	long i=ed_len()-p;
@@ -3226,7 +2868,7 @@ static VOID_RETURN move_down VOID_ARGS
 	if (sel_on) paint_text(-j);
 }
 
-static VOID_RETURN flip_up VOID_ARGS
+static void flip_up(void)
 {
 	long pos=ed_pos();
 	long l=sl_this(pos);
@@ -3245,7 +2887,7 @@ static VOID_RETURN flip_up VOID_ARGS
 	if (sel_on) paint_text(-d);
 }
 
-static VOID_RETURN flip_down VOID_ARGS
+static void flip_down(void)
 {
 	long p=ed_pos();
 	int j=total_lines-5;
@@ -3274,12 +2916,7 @@ static VOID_RETURN flip_down VOID_ARGS
 	if (sel_on) paint_text(-p);
 }
 
-static int cur_key
-#ifdef USE_PROTOTYPES
-(int i)
-#else
-(i) int i;
-#endif
+static int cur_key(int i)
 {
 	switch (i) 
 	{
@@ -3330,7 +2967,7 @@ static int cur_key
 	return 1;   
 }
 
-static VOID_RETURN insert_text VOID_ARGS
+static void insert_text(void)
 {
 	int c;
 	menu_erased=1;
@@ -3437,12 +3074,7 @@ static VOID_RETURN insert_text VOID_ARGS
 	}
 }
 
-static VOID_RETURN save_select
-#ifdef USE_PROTOTYPES
-(char *file)
-#else
-(file) char *file;
-#endif
+static void save_select(char *file)
 {
 	FILE *fptr;
 	unsigned int i;
@@ -3473,12 +3105,7 @@ static VOID_RETURN save_select
 	}
 }
 
-static char * enter_fname
-#ifdef USE_PROTOTYPES
-(char *fstr)
-#else
-(fstr) char *fstr;
-#endif
+static char * enter_fname(char *fstr)
 {
 	int i=0,c,j;
 
@@ -3527,12 +3154,7 @@ static char * enter_fname
 	return get_fname;
 }
 
-static VOID_RETURN do_get
-#ifdef USE_PROTOTYPES
-(char *file)
-#else
-(file) char *file;
-#endif
+static void do_get(char *file)
 {
 	FILE *fptr;
 	long p=ed_pos();
@@ -3574,12 +3196,7 @@ static VOID_RETURN do_get
 	plot_cursor();
 }
 
-VOID_RETURN do_clipboard
-#ifdef USE_PROTOTYPES
-(int c)
-#else
-(c) int c;
-#endif
+void do_clipboard(int c)
 {
 	switch(c) 
 	{
@@ -3629,12 +3246,7 @@ VOID_RETURN do_clipboard
 	}
 }
 
-static long get_text_input
-#ifdef USE_PROTOTYPES
-(char *f_string)
-#else
-(f_string) char *f_string;
-#endif
+static long get_text_input(char *f_string)
 {
 	int i=0;
 	int c,k;
@@ -3695,12 +3307,7 @@ static long get_text_input
 	return i;
 }
 
-static int match_string
-#ifdef USE_PROTOTYPES
-(long p,char *q,long i)
-#else
-(p,q,i) long p; char *q; long i;
-#endif
+static int match_string(long p,char *q,long i)
 {
 	while (i--) 
 	{
@@ -3712,12 +3319,7 @@ static int match_string
 	return 1;
 }
 
-VOID_RETURN do_find
-#ifdef USE_PROTOTYPES
-(int m)
-#else
-(m) int m;
-#endif
+void do_find(int m)
 {
 	char *q;
 	long i,k,l,f;
@@ -3853,7 +3455,7 @@ VOID_RETURN do_find
 	if (!f) again=0;
 }
 
-static VOID_RETURN do_block VOID_ARGS
+static void do_block(void)
 {
 	int c;
 	mode='b';
@@ -3879,12 +3481,7 @@ static VOID_RETURN do_block VOID_ARGS
 	plot_cursor();
 }
 
-static int get_again
-#ifdef USE_PROTOTYPES
-(int k)
-#else
-(k) int k;
-#endif
+static int get_again(int k)
 {
 	int i=1;
 
@@ -3937,7 +3534,7 @@ static int get_again
 	return 0;
 }
 
-static VOID_RETURN update VOID_ARGS
+static void update(void)
 {
 	show_size=2;
 	show_status();
@@ -3947,7 +3544,7 @@ static VOID_RETURN update VOID_ARGS
 	plot_cursor();
 }
 
-static int quit VOID_ARGS
+static int quit(void)
 {
 	mode='q';
 	menu_erased=1;
@@ -3979,22 +3576,13 @@ static int quit VOID_ARGS
 	return -1;
 }
 
-#ifdef USE_PROTOTYPES
 static void my_atexit(void)
-#else
-static my_atexit()
-#endif
 {
 /*	fflush(stdout);*/
 	tty_reset(0);
 }
 
-static VOID_RETURN do_jump
-#ifdef USE_PROTOTYPES
-(long l)
-#else
-(l) long l;
-#endif
+static void do_jump(long l)
 {
 	long i=ed_len();
 	long p=0;
@@ -4026,15 +3614,11 @@ static VOID_RETURN do_jump
 	plot_cursor();
 }
 
-#ifdef __SC__
-#define HAVE_DRIVE
-#endif
-
 #ifdef _WIN32
 #define HAVE_DRIVE
 #endif
 
-VOID_RETURN do_shell VOID_ARGS
+void do_shell(void)
 {
 	char *p=NULL;
 #ifdef HAVE_DRIVE
@@ -4054,10 +3638,6 @@ VOID_RETURN do_shell VOID_ARGS
 
 #ifdef _WIN32
 	p=getenv("COMSPEC");
-#else /* _WIN32 */
-#ifdef __SC__
-	p=getenv("COMSPEC");
-#endif /* _SC__*/
 #endif /* _WIN32 */
 
 	if (!p)
@@ -4100,7 +3680,7 @@ VOID_RETURN do_shell VOID_ARGS
 	cur_key(ctrl_w);
 }
 
-static int ed_init VOID_ARGS
+static int ed_init(void)
 {
 #ifdef MALLOC_SIZE
 	cur_file.buf_size=MALLOC_SIZE;
@@ -4163,7 +3743,7 @@ static int ed_init VOID_ARGS
 	return 0;
 }
 
-static VOID_RETURN ed_clos VOID_ARGS
+static void ed_clos(void)
 {
 #ifdef TEMP_FP
 	if (cur_file.t_fp)
@@ -4189,12 +3769,7 @@ static VOID_RETURN ed_clos VOID_ARGS
 #endif
 }
 
-int main
-#ifdef USE_PROTOTYPES
-(int argc,char **argv)
-#else
-(argc,argv) int argc; char **argv;
-#endif
+int main(int argc,char **argv)
 {
 	int c,editing=0;
 	char *fn;
@@ -4460,11 +4035,7 @@ int main
 
 	plot(menu_line,0);
 	clear_line();
-#if defined(HAVE_DISP_H)
-	plot(status_line,0);
-#else
 	plot(menu_line,0);
-#endif
 	fflush(stdout);
 
 	/* might be helpful to monitor output of socket
