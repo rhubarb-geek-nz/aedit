@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 2 2020-05-23 17:25:13Z rhubarb-geek-nz $
+ * $Id: aedit.c 6 2021-05-06 21:09:19Z rhubarb-geek-nz $
  */
 
 /*
@@ -247,8 +247,10 @@ int i;
 	}
 }
 
-#ifndef HAVE_SIGINTERRUPT
-int siginterrupt
+#ifdef HAVE_SIGINTERRUPT
+#	define aedit_siginterrupt(n,f) 	siginterrupt(n,f)
+#else
+static int aedit_siginterrupt
 #	if defined(__STDC__) || defined(_WIN32)
 	(int n,int flag)
 #	else
@@ -292,11 +294,11 @@ static int co_getch VOID_ARGS
 		char buf[1];
 		int i;
 #ifdef SIGTTIN
-		siginterrupt(SIGWINCH,1);
+		aedit_siginterrupt(SIGWINCH,1);
 #endif
 		i=tty_read(0,buf,1);
 #ifdef SIGTTIN
-		siginterrupt(SIGWINCH,0);
+		aedit_siginterrupt(SIGWINCH,0);
 #endif
 		if (i==1) 
 		{
@@ -4065,7 +4067,9 @@ VOID_RETURN do_shell VOID_ARGS
 
 	if (!p) p="/bin/sh";
 
-	system(p);
+	if (system(p))
+	{
+	}
 
 #ifdef HAVE_DRIVE
 	if (drive != -1)
@@ -4226,7 +4230,7 @@ int main
 #ifdef SIGWINCH
 	signal(SIGWINCH,winch);	/* want this to notify of screen changes */
 #ifdef SIGTTIN
-    siginterrupt(SIGWINCH,0); /* don't want system calls interrupted */
+    aedit_siginterrupt(SIGWINCH,0); /* don't want system calls interrupted */
 #endif
 #endif
 
@@ -4456,7 +4460,7 @@ int main
 
 	plot(menu_line,0);
 	clear_line();
-#if defined(_WIN32) || defined(HAVE_DISP_H)
+#if defined(HAVE_DISP_H)
 	plot(status_line,0);
 #else
 	plot(menu_line,0);
@@ -4481,6 +4485,3 @@ dumpinfo()
 	printf("t_hil=%ld\n",cur_file.t_hil);*/
 }
 #endif
-
-
-
