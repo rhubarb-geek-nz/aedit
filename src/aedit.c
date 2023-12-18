@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 1 2014-05-09 23:06:20Z rhubarb-geek-nz $
+ * $Id: aedit.c 2 2020-05-23 17:25:13Z rhubarb-geek-nz $
  */
 
 /*
@@ -33,6 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #	include <config.h>
+#endif
+
+#ifdef HAVE_LIMITS_H
+#	include <limits.h>
 #endif
 
 #include <stdio.h>
@@ -157,6 +161,10 @@ struct passwd *getpwuid();
 	long lseek();
 #endif
 
+#ifndef PATH_MAX
+#	define PATH_MAX	80
+#endif
+
 #define escape		'\033'
 #define nl		'\n'
 #define tab		'\t'
@@ -202,7 +210,7 @@ static int forever=1;
 static char f_string[max_cols];
 static char r_string[max_cols];
 static int last_cmd;
-static char get_fname[80];
+static char get_fname[PATH_MAX];
 
 
 static VOID_RETURN find_cursor VOID_ARGS;
@@ -389,7 +397,7 @@ int show_size=0;
 
 long page_start;
 
-static char filename[80];
+static char filename[PATH_MAX];
 static int chars_per_line[max_lines];
 static char *clip_name="clipbrd.tmp";
 
