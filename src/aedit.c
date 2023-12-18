@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 38 2023-12-17 12:48:07Z rhubarb-geek-nz $
+ * $Id: aedit.c 39 2023-12-17 13:14:00Z rhubarb-geek-nz $
  */
 
 /*
@@ -232,7 +232,7 @@ static int aedit_siginterrupt(int n,int flag)
 
 static char *strjoin(char *fmt,...)
 {
-	int len=0;
+	size_t len=0;
 	int count=0;
 	char *retval=NULL;
 	int joint=strlen(fmt);
@@ -264,7 +264,7 @@ static char *strjoin(char *fmt,...)
 		while (count--)
 		{
 			char *p=va_arg(ap,char *);
-			int l=strlen(p);
+			size_t l=strlen(p);
 			if (len)
 			{
 				memcpy(retval+len,fmt,joint);
