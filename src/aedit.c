@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 30 2023-12-16 15:26:28Z rhubarb-geek-nz $
+ * $Id: aedit.c 31 2023-12-16 16:06:53Z rhubarb-geek-nz $
  */
 
 /*
@@ -105,7 +105,7 @@ char sig[]="@(#)aedit 2.0";
 
 #ifdef ANSI_SYS
 #	define REVERSE
-#	define SCROLL_RGN
+/* #	define SCROLL_RGN */
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -3772,9 +3772,9 @@ int main(int argc,char **argv)
 {
 	int c,editing=0;
 	char *fn;
+	static char cn[256];
 #ifdef HAVE_PWD_H
 	struct passwd *pw=getpwuid(getuid());
-	static char cn[256];
 
 	if (!pw) 
 	{
@@ -3788,7 +3788,23 @@ int main(int argc,char **argv)
 		strcpy(cn,"/tmp");
 	}
 	strcat(cn,"/.aedit.clp");
-	clip_name=cn;	
+	clip_name=cn;
+#else
+#	ifdef _WIN32
+	const char *homedir=getenv("USERPROFILE");
+#	else
+	const char *homedir=getenv("HOME");
+#	endif
+	if (homedir)
+	{
+		strcpy(cn,homedir);
+#	ifdef _WIN3
+		strcat(cn,"\\.aedit.clp");
+#	else
+		strcat(cn,"/.aedit.clp");
+#	endif
+		clip_name=cn;
+	}
 #endif
 
 	{
