@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 31 2023-12-16 16:06:53Z rhubarb-geek-nz $
+ * $Id: aedit.c 32 2023-12-16 23:30:52Z rhubarb-geek-nz $
  */
 
 /*
@@ -105,7 +105,7 @@ char sig[]="@(#)aedit 2.0";
 
 #ifdef ANSI_SYS
 #	define REVERSE
-/* #	define SCROLL_RGN */
+#	define SCROLL_RGN
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -303,7 +303,7 @@ struct sgttyb temp_mode;
 #		ifdef _DEBUG
 #			define MALLOC_SIZE 8192
 #		else
-#			define MALLOC_SIZE 8192
+#			define MALLOC_SIZE 32768
 #		endif
 #	endif
 #endif
@@ -337,7 +337,7 @@ static int chars_per_line[max_lines];
 static char *clip_name="clipbrd.tmp";
 
 #ifndef MALLOC_SIZE
-static char curfbuf[8129];
+static char curfbuf[8192];
 #endif
 
 struct ed_file
