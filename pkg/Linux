@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 10 2021-12-05 16:03:40Z rhubarb-geek-nz $
+# $Id: Linux 19 2022-01-12 15:46:43Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -35,6 +35,24 @@ VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; 
 HIVERS=$(echo $VERSION / 10000 | bc)
 LOVERS=$(echo $VERSION % 10000 | bc)
 PWD=`pwd`
+ISSLACK=false
+ISRPM=false
+ISDEB=false
+
+for d in $( . /etc/os-release ; echo $ID $ID_LIKE )
+do
+	case "$d" in
+		debian )
+			ISDEB=true
+			;;
+		fedora | centos | rhel )
+			ISRPM=true
+			;;
+		slackware )
+			ISSLACK=true
+			;;
+	esac
+done
 
 mkdir -p data/usr/bin rpms
 
@@ -43,7 +61,7 @@ PKGNAME=aedit
 
 cp aedit data/usr/bin
 
-if dpkg --print-architecture 2>/dev/null
+if $ISDEB
 then
 	DPKGARCH=$(dpkg --print-architecture)
 	SIZE=$(du -sk data/usr/bin/aedit | while read A B; do echo $A; done)
@@ -66,7 +84,7 @@ EOF
 	rm -rf data/DEBIAN
 fi
 
-if rpmbuild --version 2>/dev/null
+if $ISRPM
 then
 	cat > rpm.spec <<EOF
 Summary: Aedit editor
@@ -93,4 +111,41 @@ EOF
 	do
 		mv "$N" .
 	done
+fi
+
+if $ISSLACK
+then
+	mkdir -p data/usr/bin data/install data/root
+	cp aedit data/usr/bin
+	strip data/usr/bin/aedit
+
+	cat > data/install/slack-desc <<EOF
+$PKGNAME: aedit ISIS-II style text editor
+$PKGNAME:
+$PKGNAME: Text editor based on interface from Intel ISIS-II aedit, which in turn
+$PKGNAME: turn was based on its big brother alter. 
+$PKGNAME: 
+$PKGNAME: This was originally written in the mid 80s on QNX running on an 8088, 
+$PKGNAME: with a CBM-64 acting as the console. I have used this on every UNIX
+$PKGNAME: system I have touched. A couple of things have not been implemented, 
+$PKGNAME: (a) other - a feature to hold two files in memory (b) error on saving
+$PKGNAME: detected, the original ISIS-II would reboot if you attempted to write
+$PKGNAME: to a read-only disk. It has even run on UNIX 7 on a PDP-II emulator.
+EOF
+
+	ARCH=$(uname -m)
+	OSVER=$(. /etc/os-release ; echo $VERSION_ID)
+
+	case "$ARCH" in
+		aarch64 | x86_64 )
+			;;
+		arm* )
+			ARCH=arm
+			;;
+		* )
+			ARCH=$(gcc -Q --help=target | grep "\-march=" | while read A B C; do echo $B; break; done)
+			;;
+	esac
+	
+	tar --create --owner=0 --group=0 --gzip --file "$PKGNAME-$VERSION-$ARCH-1_slack$OSVER.tgz" -C data/root . -C .. usr/bin/aedit install/slack-desc
 fi
