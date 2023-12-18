@@ -4,7 +4,7 @@
 #  This file is part of RHB aedit.
 #
 #  This program is free software: you can redistribute it and/or modify it
-#  under the terms of the GNU Lesser General Public License as published by the
+#  under the terms of the GNU General Public License as published by the
 #  Free Software Foundation, either version 3 of the License, or (at your
 #  option) any later version.
 # 
@@ -13,10 +13,10 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 #  more details.
 #
-#  You should have received a copy of the GNU Lesser General Public License
+#  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 5 2021-05-06 21:08:40Z rhubarb-geek-nz $
+#  $Id: Makefile 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
 
 all: dist
 
