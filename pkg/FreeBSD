@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: FreeBSD 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+# $Id: FreeBSD 27 2022-11-21 22:57:22Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -46,7 +46,7 @@ cat > MANIFEST <<EOF
 name $PKGNAME
 version $VERSION
 desc Text Editor based on Intel ISIS-II aedit
-www http://rhbaedit.sf.net
+www http://aedit.sf.net
 origin editors/aedit
 comment Text Editor based on Intel ISIS-II aedit
 maintainer rhubarb-geek-nz@users.sourceforge.net

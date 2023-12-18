@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: NetBSD 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+# $Id: NetBSD 27 2022-11-21 22:57:22Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -43,7 +43,7 @@ cp aedit root/usr/bin
 strip root/usr/bin/aedit
 
 (
-	echo HOMEPAGE=http://rhbaedit.sf.net
+	echo HOMEPAGE=http://aedit.sf.net
 	echo MACHINE_ARCH=$(uname -p)
 	echo OPSYS=$(uname -s)
 	echo OS_VERSION=$(uname -r)

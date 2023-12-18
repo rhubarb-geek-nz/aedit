@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Darwin 26 2022-09-18 09:35:08Z rhubarb-geek-nz $
+# $Id: Darwin 27 2022-11-21 22:57:22Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -39,4 +39,4 @@ cleanup
 
 mkdir bom
 cp aedit bom
-pkgbuild --root bom --identifier net.sf.rhbaedit --version "$VERSION" --install-location /usr/local/bin --sign "Developer ID Installer: $APPLE_DEVELOPER" "$PKGNAME.pkg"
+pkgbuild --root bom --identifier net.sf.aedit --version "$VERSION" --install-location /usr/local/bin --sign "Developer ID Installer: $APPLE_DEVELOPER" "$PKGNAME.pkg"
