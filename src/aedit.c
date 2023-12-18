@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 39 2023-12-17 13:14:00Z rhubarb-geek-nz $
+ * $Id: aedit.c 40 2023-12-17 13:19:35Z rhubarb-geek-nz $
  */
 
 /*
@@ -235,7 +235,7 @@ static char *strjoin(char *fmt,...)
 	size_t len=0;
 	int count=0;
 	char *retval=NULL;
-	int joint=strlen(fmt);
+	size_t joint=strlen(fmt);
 
 	va_list ap;
 
