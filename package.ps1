@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
+#  $Id: package.ps1 46 2023-12-18 16:44:00Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F'
@@ -197,50 +197,7 @@ CALL "$VCVARS"
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
 NMAKE /NOLOGO clean
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
-NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4"
-IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
-signtool sign /a /sha1 "$CertificateThumbprint" /fd SHA256 /t http://timestamp.digicert.com "bin\$ARCH\aedit.exe"
-EXIT %ERRORLEVEL%
-"@ | & "$env:COMSPEC"
-
-			If ( $LastExitCode -ne 0 )
-			{
-				Exit $LastExitCode
-			}
-
-			$xmlDoc = [System.Xml.XmlDocument](Get-Content "$ARCH.wxs")
-
-			$nsMgr = New-Object -TypeName System.Xml.XmlNamespaceManager -ArgumentList $xmlDoc.NameTable
-
-			$nsmgr.AddNamespace("wix", "http://schemas.microsoft.com/wix/2006/wi")
-
-			$xmlNode = $xmlDoc.SelectSingleNode("/wix:Wix/wix:Product", $nsmgr)
-
-			$xmlNode.Version = $Version
-
-			$xmlNode = $xmlDoc.SelectSingleNode("/wix:Wix/wix:Product/wix:Upgrade/wix:UpgradeVersion", $nsmgr)
-
-			$xmlNode.Maximum = $Version
-
-			$xmlDoc.Save("$Win32Dir\$ARCH.wxs")
-
-			& "${env:WIX}bin\candle.exe" -nologo "$ARCH.wxs"
-
-			if ($LastExitCode -ne 0)
-			{
-				exit $LastExitCode
-			}
-
-			& "${env:WIX}bin\light.exe" -nologo -cultures:null -out "aedit-$Version-$ARCH.msi" "$ARCH.wixobj"
-
-			if ($LastExitCode -ne 0)
-			{
-				exit $LastExitCode
-			}
-
-			@"
-CALL "$VCVARS"
-signtool sign /a /sha1 "$CertificateThumbprint" /fd SHA256 /t http://timestamp.digicert.com "aedit-$Version-$ARCH.msi"
+NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint"
 EXIT %ERRORLEVEL%
 "@ | & "$env:COMSPEC"
 
@@ -248,12 +205,6 @@ EXIT %ERRORLEVEL%
 			{
 				exit $LastExitCode
 			}
-
-			Remove-Item -LiteralPath "aedit-$Version-$ARCH.wixpdb"
-			Remove-Item -LiteralPath "$ARCH.wixobj"
-			Remove-Item -LiteralPath "bin\$ARCH\aedit.exp"
-			Remove-Item -LiteralPath "bin\$ARCH\aedit.lib"
-			Remove-Item -LiteralPath "aedit.res"
 		}
 	}
 	finally

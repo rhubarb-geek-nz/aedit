@@ -16,15 +16,17 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
+#  $Id: Makefile 46 2023-12-18 16:44:00Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c tmpfile.c
 CL=cl
 OBJDIR=obj\$(VSCMD_ARG_TGT_ARCH)
 BINDIR=bin\$(VSCMD_ARG_TGT_ARCH)
 APP=$(BINDIR)\aedit.exe
+MSI=aedit-$(DEPVERS_aedit_STR4)-$(VSCMD_ARG_TGT_ARCH).msi
+RESFILE=$(OBJDIR)\aedit.res
 
-all: $(APP)
+all: $(APP) $(MSI)
 	
 clean: 
 	if exist $(APP) del $(APP)
@@ -32,7 +34,7 @@ clean:
 	if exist $(OBJDIR) rmdir $(OBJDIR)
 	if exist $(BINDIR) rmdir $(BINDIR)
 
-$(APP): $(SRC) $(OBJDIR) $(BINDIR) aedit.res
+$(APP): $(SRC) $(OBJDIR) $(BINDIR) $(RESFILE)
 	$(CL) 							\
 		/Fe$@ 						\
 		/Fo$(OBJDIR)\				\
@@ -52,11 +54,20 @@ $(APP): $(SRC) $(OBJDIR) $(BINDIR) aedit.res
 		/PDB:NONE					\
 		/SUBSYSTEM:CONSOLE			\
 		/DEF:aedit.def				\
-		aedit.res
-	dir $@
+		$(RESFILE)
+	del "$(BINDIR)\aedit.exp"
+	del "$(BINDIR)\aedit.lib"
+	signtool sign /sha1 "$(CertificateThumbprint)" /fd SHA256 /t http://timestamp.digicert.com $@
 
-aedit.res: aedit.rc
+$(RESFILE): aedit.rc
 	rc /r $(RCFLAGS) "/DDEPVERS_aedit_INT4=$(DEPVERS_aedit_INT4)" "/DDEPVERS_aedit_STR4=\"$(DEPVERS_aedit_STR4)\"" /fo$@ aedit.rc
 
 $(OBJDIR) $(BINDIR): 
 	mkdir $@
+
+$(MSI): $(APP)
+	"$(WIX)bin\candle.exe" -nologo "wix\$(VSCMD_ARG_TGT_ARCH).wxs" -dDEPVERS_aedit_STR4=$(DEPVERS_aedit_STR4)
+	"$(WIX)bin\light.exe" -nologo -cultures:null -out $@ "$(VSCMD_ARG_TGT_ARCH).wixobj"
+	del "$(VSCMD_ARG_TGT_ARCH).wixobj"
+	del "aedit-$(DEPVERS_aedit_STR4)-$(VSCMD_ARG_TGT_ARCH).wixpdb"
+	signtool sign /sha1 "$(CertificateThumbprint)" /fd SHA256 /t http://timestamp.digicert.com $@
