@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 47 2023-12-18 19:19:31Z rhubarb-geek-nz $
+#  $Id: Makefile 48 2023-12-18 20:53:56Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c tmpfile.c
 CL=cl
