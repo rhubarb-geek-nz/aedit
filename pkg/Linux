@@ -17,10 +17,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 9 2021-12-05 12:51:01Z rhubarb-geek-nz $
+# $Id: Linux 10 2021-12-05 16:03:40Z rhubarb-geek-nz $
 #
-
-SVN_URL=$(svn info . | grep "URL: https:" | while read A B C; do echo $B; break; done)
 
 cleanup()
 {
@@ -58,7 +56,6 @@ Installed-Size: $SIZE
 Maintainer: rhubarb-geek-nz@users.sourceforge.net
 Section: editors
 Priority: extra
-Vcs-Svn: $SVN_URL
 Description: Aedit editor
  Text editor based resembling ISIS alter.
  .
