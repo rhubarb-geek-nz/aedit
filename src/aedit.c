@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 29 2023-12-16 14:43:44Z rhubarb-geek-nz $
+ * $Id: aedit.c 30 2023-12-16 15:26:28Z rhubarb-geek-nz $
  */
 
 /*
@@ -105,7 +105,7 @@ char sig[]="@(#)aedit 2.0";
 
 #ifdef ANSI_SYS
 #	define REVERSE
-/* #define SCROLL_RGN*/
+#	define SCROLL_RGN
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -1562,8 +1562,7 @@ int i;
 #endif /* PLOT_CTRL */
 
 #ifdef SCROLL_RGN
-scrol_rgn(r,c)
-int r,c;
+static void scrol_rgn(int r,int c)
 {
 	char scr_buf[20];
 	char num_buf[10];
@@ -2613,7 +2612,7 @@ void repage(void)
 }
 
 #ifdef SCROLL_RGN
-scrol_up()
+static void scrol_up(void)
 {
 	int i;
 	scrol_rgn(0,last_text);
@@ -2630,7 +2629,7 @@ scrol_up()
 	chars_per_line[i]=0;
 
 }
-scrol_down()
+static void scrol_down(void)
 {
 	int i;
 	scrol_rgn(0,last_text);
