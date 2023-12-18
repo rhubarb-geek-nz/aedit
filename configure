@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: configure 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+# $Id: configure 36 2023-12-17 09:44:04Z rhubarb-geek-nz $
 #
 
 if test -z "$CC"
@@ -38,7 +38,7 @@ cleanup
 
 cat > a.c << EOF
 #include <stdio.h>
-int main() { return 0; }
+int main(int argc,char **argv) { return 0; }
 EOF
 $CC $CFLAGS a.c
 
@@ -46,7 +46,7 @@ cat /dev/null >  config.h
 
 cat > a.c << EOF
 #include <termios.h>
-int main() { return 0; }
+int main(int argc,char **argv) { return 0; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -55,7 +55,7 @@ fi
 
 cat > a.c << EOF
 #include <limits.h>
-int main() { return 0; }
+int main(int argc,char **argv) { return 0; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -64,7 +64,7 @@ fi
 
 cat > a.c << EOF
 #include <fcntl.h>
-int main() { return 0; }
+int main(int argc,char **argv) { return 0; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -73,7 +73,7 @@ fi
 
 cat > a.c << EOF
 #include <sys/ioctl.h>
-int main() { return 0; }
+int main(int argc,char **argv) { return 0; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -83,7 +83,7 @@ fi
 cat > a.c << EOF
 #include <termios.h>
 struct termios t;
-int main() { cfmakeraw(&t); return 0; }
+int main(int argc,char **argv) { cfmakeraw(&t); return 0; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -92,7 +92,7 @@ fi
 
 cat > a.c << EOF
 #include <stdio.h>
-int main() { FILE *fp=tmpfile(); return !fp; }
+int main(int argc,char **argv) { FILE *fp=tmpfile(); return !fp; }
 EOF
 if $CC $CFLAGS a.c
 then
@@ -101,7 +101,7 @@ fi
 
 cat > a.c << EOF
 #include <signal.h>
-int main() { return siginterrupt(0,0); }
+int main(int argc,char **argv) { return siginterrupt(0,0); }
 EOF
 if $CC $CFLAGS a.c
 then

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 34 2023-12-17 06:16:04Z rhubarb-geek-nz $
+ * $Id: aedit.c 36 2023-12-17 09:44:04Z rhubarb-geek-nz $
  */
 
 /*
@@ -2668,7 +2668,7 @@ static void scrol_down(void)
 }
 #endif
 
-static void find_cursor()
+static void find_cursor(void)
 {
 	if (page_start > ed_pos()) 
 	{
