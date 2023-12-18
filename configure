@@ -1,0 +1,109 @@
+#!/bin/sh -e
+#
+#  Copyright 2021, Roger Brown
+#
+#  This file is part of RHB aedit.
+#
+#  This program is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at your
+#  option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+# $Id: configure 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+#
+
+if test -z "$CC"
+then
+	CC=cc
+fi
+
+rm -rf config.h
+
+cleanup()
+{
+	rm -rf a.out a.c
+}
+
+trap cleanup 0
+
+cleanup
+
+cat > a.c << EOF
+#include <stdio.h>
+int main() { return 0; }
+EOF
+$CC $CFLAGS a.c
+
+cat /dev/null >  config.h
+
+cat > a.c << EOF
+#include <termios.h>
+int main() { return 0; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_TERMIOS_H 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <limits.h>
+int main() { return 0; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_LIMITS_H 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <fcntl.h>
+int main() { return 0; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_FCNTL_H 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <sys/ioctl.h>
+int main() { return 0; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_SYS_IOCTL_H 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <termios.h>
+struct termios t;
+int main() { cfmakeraw(&t); return 0; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_CFMAKERAW 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <stdio.h>
+int main() { FILE *fp=tmpfile(); return !fp; }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_TMPFILE 1" >> config.h
+fi
+
+cat > a.c << EOF
+#include <signal.h>
+int main() { return siginterrupt(0,0); }
+EOF
+if $CC $CFLAGS a.c
+then
+	echo "#define HAVE_SIGINTERRUPT 1" >> config.h
+fi

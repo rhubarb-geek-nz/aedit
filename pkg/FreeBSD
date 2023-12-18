@@ -1,0 +1,58 @@
+#!/bin/sh -e
+#
+#  Copyright 2021, Roger Brown
+#
+#  This file is part of RHB aedit
+#
+#  This program is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at your
+#  option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+# $Id: FreeBSD 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+#
+
+VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
+HIVERS=$(echo $VERSION / 10000 | bc)
+LOVERS=$(echo $VERSION % 10000 | bc)
+PWD=`pwd`
+
+VERSION="1.1.$HIVERS.$LOVERS"
+PKGNAME=aedit
+
+cleanup()
+{
+	rm -rf root MANIFEST PLIST
+}
+
+trap cleanup 0
+
+cleanup
+
+mkdir -p root/usr/bin
+
+cp aedit root/usr/bin
+strip root/usr/bin/aedit
+
+cat > MANIFEST <<EOF
+name $PKGNAME
+version $VERSION
+desc Text Editor based on Intel ISIS-II aedit
+www http://rhbaedit.sf.net
+origin editors/aedit
+comment Text Editor based on Intel ISIS-II aedit
+maintainer rhubarb-geek-nz@users.sourceforge.net
+prefix /usr
+EOF
+
+echo bin/aedit > PLIST
+
+pkg create -M MANIFEST -o . -r root -v -p PLIST

@@ -1,0 +1,99 @@
+#!/bin/sh -e
+#
+#  Copyright 2021, Roger Brown
+#
+#  This file is part of RHB aedit.
+#
+#  This program is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at your
+#  option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+# $Id: Linux 4 2021-04-18 12:02:33Z rhubarb-geek-nz $
+#
+
+SVN_URL=$(svn info . | grep "URL:" | while read A B C; do echo $B; done)
+
+cleanup()
+{
+	rm -rf data rpms rpm.spec
+}
+
+umask 022
+
+cleanup
+
+trap cleanup 0
+
+VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
+HIVERS=$(echo $VERSION / 10000 | bc)
+LOVERS=$(echo $VERSION % 10000 | bc)
+PWD=`pwd`
+
+mkdir -p data/usr/bin rpms
+
+VERSION="1.1.$HIVERS.$LOVERS"
+PKGNAME=aedit
+
+cp aedit data/usr/bin
+
+if dpkg --print-architecture 2>/dev/null
+then
+	DPKGARCH=$(dpkg --print-architecture)
+	SIZE=$(du -sk data/usr/bin/aedit | while read A B; do echo $A; done)
+	mkdir data/DEBIAN
+	cat > data/DEBIAN/control <<EOF
+Package: $PKGNAME
+Version: $VERSION
+Architecture: $DPKGARCH
+Installed-Size: $SIZE
+Maintainer: rhubarb-geek-nz@users.sourceforge.net
+Section: editors
+Priority: extra
+Vcs-Svn: $SVN_URL
+Description: Aedit editor
+ Text editor based resembling ISIS alter.
+ .
+EOF
+
+	dpkg-deb --root-owner-group --build data "$PKGNAME"_"$VERSION"_"$DPKGARCH".deb
+
+	rm -rf data/DEBIAN
+fi
+
+if rpmbuild --version 2>/dev/null
+then
+	cat > rpm.spec <<EOF
+Summary: Aedit editor
+Name: aedit
+Version: $VERSION
+Release: 1
+Group: Applications/System
+License: GPL
+Prefix: /usr
+
+%description
+Text editor based on ISIS alter
+
+%files
+%defattr(-,root,root)
+%attr(755,root,root) /usr/bin/aedit
+
+%clean
+EOF
+
+	rpmbuild --buildroot "$PWD/data" --define "_rpmdir $PWD/rpms" --define "_build_id_links none" -bb "$PWD/rpm.spec" 
+
+	find rpms -name "*.rpm" -type f | while read N
+	do
+		mv "$N" .
+	done
+fi
