@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 33 2023-12-17 01:30:12Z rhubarb-geek-nz $
+ * $Id: aedit.c 34 2023-12-17 06:16:04Z rhubarb-geek-nz $
  */
 
 /*
@@ -1072,6 +1072,7 @@ static int tty_sz(int fd)
 		{
 			total_cols=ws.ws_col;
 			total_lines=ws.ws_row;
+			if (total_lines > max_lines) total_lines=max_lines;
 			return 0;
 		}
 	}
@@ -1084,6 +1085,7 @@ static int tty_sz(int fd)
 		{
 			total_cols=cols;
 			total_lines=rows;
+			if (total_lines > max_lines) total_lines=max_lines;
 			return 0;
 		}
 	}
@@ -3818,7 +3820,7 @@ int main(int argc,char **argv)
 	if (homedir)
 	{
 		strcpy(cn,homedir);
-#	ifdef _WIN3
+#	ifdef _WIN32
 		strcat(cn,"\\.aedit.clp");
 #	else
 		strcat(cn,"/.aedit.clp");
