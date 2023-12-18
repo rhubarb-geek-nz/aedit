@@ -1,0 +1,31 @@
+#include "windows.h"
+
+1 VERSIONINFO
+ FILEVERSION DEPVERS_aedit_INT4
+ PRODUCTVERSION DEPVERS_aedit_INT4
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS VS_FF_PRERELEASE
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "Comments", "ISIS alter style text editor\0"
+            VALUE "CompanyName", "rhubarb-geek-nz\0"
+            VALUE "FileDescription", "Simple console text editor\0"
+            VALUE "FileVersion", DEPVERS_aedit_STR4
+            VALUE "InternalName", "aedit\0"
+            VALUE "LegalCopyright", "© Roger Brown. 1989-2012\0"
+            VALUE "OriginalFilename", "AEDIT.EXE\0"
+            VALUE "ProductName", "aedit\0"
+            VALUE "ProductVersion", DEPVERS_aedit_STR4
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1252
+    END
+END

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 28 2022-11-26 09:18:27Z rhubarb-geek-nz $
+#  $Id: Makefile 43 2023-12-17 21:49:02Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c tmpfile.c
 CL=cl
@@ -32,26 +32,31 @@ clean:
 	if exist $(OBJDIR) rmdir $(OBJDIR)
 	if exist $(BINDIR) rmdir $(BINDIR)
 
-$(APP): $(SRC) $(OBJDIR) $(BINDIR)
+$(APP): $(SRC) $(OBJDIR) $(BINDIR) aedit.res
 	$(CL) 							\
 		/Fe$@ 						\
-		/Fo$(OBJDIR)\					\
-		/W3 							\
-		/WX 							\
-		/MT 							\
+		/Fo$(OBJDIR)\				\
+		/W3 						\
+		/WX 						\
+		/MT 						\
 		/I.							\
-		/DNDEBUG 						\
-		/D_CRT_SECURE_NO_DEPRECATE 			\
-		/D_CRT_NONSTDC_NO_DEPRECATE  			\
-		/DHAVE_LIMITS_H					\
-		/DHAVE_FCNTL_H					\
-		/DWIN32_LEAN_AND_MEAN				\
+		/DNDEBUG 					\
+		/D_CRT_SECURE_NO_DEPRECATE 	\
+		/D_CRT_NONSTDC_NO_DEPRECATE \
+		/DHAVE_LIMITS_H				\
+		/DHAVE_FCNTL_H				\
+		/DWIN32_LEAN_AND_MEAN		\
 		$(SRC) 						\
-		/link							\
-		/INCREMENTAL:NO					\
-		/PDB:NONE						\
-		/SUBSYSTEM:CONSOLE
+		/link						\
+		/INCREMENTAL:NO				\
+		/PDB:NONE					\
+		/SUBSYSTEM:CONSOLE			\
+		/DEF:aedit.def				\
+		aedit.res
 	dir $@
+
+aedit.res: aedit.rc
+	rc /r $(RCFLAGS) "/DDEPVERS_aedit_INT4=$(DEPVERS_aedit_INT4)" "/DDEPVERS_aedit_STR4=\"$(DEPVERS_aedit_STR4)\"" /fo$@ aedit.rc
 
 $(OBJDIR) $(BINDIR): 
 	mkdir $@
