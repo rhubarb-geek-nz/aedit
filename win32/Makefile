@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 21 2022-06-30 20:53:56Z rhubarb-geek-nz $
+#  $Id: Makefile 22 2022-07-05 04:43:52Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c tmpfile.c
 CL=cl
@@ -43,6 +43,8 @@ $(APP): $(SRC) $(OBJDIR) $(BINDIR)
 		/DNDEBUG 						\
 		/D_CRT_SECURE_NO_DEPRECATE 			\
 		/D_CRT_NONSTDC_NO_DEPRECATE  			\
+		/DHAVE_LIMITS_H					\
+		/DHAVE_FCNTL_H					\
 		/DWIN32_LEAN_AND_MEAN				\
 		$(SRC) 						\
 		/link							\
