@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 36 2023-12-17 09:44:04Z rhubarb-geek-nz $
+ * $Id: aedit.c 37 2023-12-17 10:08:45Z rhubarb-geek-nz $
  */
 
 /*
@@ -2045,7 +2045,7 @@ int pm=0;
 	}
 }
 
-char *menu_d[]={"Again","Block","Code","Delete","Find","-find","Get","Insert","Jump","Length","Other","Print","Quit","Replace","?replace","Shell","View","Xchange",NULL};
+char *menu_d[]={"Again","Block","Delete","Find","-find","Get","Insert","Jump","Length","Quit","Replace","?replace","Shell","View","Xchange",NULL};
 char *menu_b[]={"Buffer","Copy","Delete","Put",NULL};
 char *menu_q[]={"Abort","Exit","Init","Update","Write",NULL};
 
