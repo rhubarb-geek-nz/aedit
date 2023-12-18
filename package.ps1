@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 47 2023-12-18 19:19:31Z rhubarb-geek-nz $
+#  $Id: package.ps1 50 2023-12-18 22:38:15Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
@@ -113,7 +113,7 @@ if ($IsMacOS)
 	}
 }
 
-if ($IsWindows)
+if ($IsWindows -or ( 'Desktop' -eq $PSEdition ))
 {
 	foreach ($EDITION in 'Community', 'Professional')
 	{
@@ -201,7 +201,7 @@ if ($IsWindows)
 
 			$xmlNode = $xmlDoc.SelectSingleNode("/man:Package/man:Identity", $nsmgr)
 
-			$xmlNode.ProcessorArchitecture = $ARCH
+			$xmlNode.ProcessorArchitecture = "$ARCH"
 			$xmlNode.Version = $Version
 
 			$xmlDoc.Save("$Win32Dir\AppxManifest.xml")
@@ -233,27 +233,15 @@ EXIT %ERRORLEVEL%
 			exit $LastExitCode
 		}
 
-		$stream = New-Object System.IO.FileStream -ArgumentList "$Win32Dir\aedit-$Version.zip", Create, Write
+		Push-Location 'bin'
 
 		try
 		{
-			$archive = New-Object System.IO.Compression.ZipArchive -ArgumentList $stream, Create, $true
-
-			try
-			{
-				$ARCHLIST | ForEach-Object {
-					$ARCH = $_
-					$null = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, "$Win32Dir\bin\$ARCH\aedit.exe", "$ARCH/aedit.exe", [System.IO.Compression.CompressionLevel]::Fastest)
-				}
-			}
-			finally
-			{
-				$archive.Dispose()
-			}
+			Compress-Archive $ARCHLIST -DestinationPath "..\aedit-$Version-win.zip"
 		}
 		finally
 		{
-			$stream.Dispose()
+			Pop-Location
 		}
 	}
 	finally
