@@ -20,13 +20,12 @@
  */
 
 /*
- * $Id: termios.h 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
+ * $Id: termios.h 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
  */
 
 struct termios
 {
-	int raw;
-	unsigned long mode;
+	unsigned long inputMode,outputMode;
 	unsigned char c_cc[8];
 };
 

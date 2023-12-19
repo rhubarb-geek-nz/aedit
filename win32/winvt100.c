@@ -8,7 +8,7 @@
  *  under the terms of the GNU General Public License as published by the
  *  Free Software Foundation, either version 3 of the License, or (at your
  *  option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful, but WITHOUT
  *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
@@ -19,9 +19,9 @@
  *
  */
 
-/*
- * $Id: winvt100.c 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
- */
+ /*
+  * $Id: winvt100.c 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+  */
 
 #ifndef WIN32_LEAN_AND_MEAN
 #	define WIN32_LEAN_AND_MEAN
@@ -31,76 +31,50 @@
 #include <stdio.h>
 #include <termios.h>
 
-static struct termios console={0,0};
 extern void winch(int);
 
 void bomb(int line)
 {
-	HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (h != INVALID_HANDLE_VALUE)
 	{
 		char buf[256];
-		int i=sprintf(buf,"error at line %d of file %s\n",
-				line,__FILE__);
+		int i = sprintf(buf, "error at line %d of file %s\n",
+			line, __FILE__);
 		DWORD dw;
-		WriteFile(h,buf,i,&dw,NULL);
+		WriteFile(h, buf, i, &dw, NULL);
 	}
 	ExitProcess(1);
 }
 
-int tcgetattr(int fd,struct termios *attr)
+int tcgetattr(int fd, struct termios* attr)
 {
-	HANDLE h;
-
-	if (fd != 0) bomb(__LINE__);
-
-	h=GetStdHandle(STD_INPUT_HANDLE);
-
-	if (h != INVALID_HANDLE_VALUE)
+	if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &attr->inputMode) &&
+		GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &attr->outputMode))
 	{
-		DWORD mode;
-		if (GetConsoleMode(h,&mode))
-		{
-			console.mode=mode;
-		}
+		return 0;
 	}
 
-	*attr=console;
+	return -1;
+}
 
+int cfmakeraw(struct termios* attr)
+{
+	attr->inputMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
+	attr->inputMode |= ENABLE_WINDOW_INPUT;
+//	attr->outputMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	return 0;
 }
 
-int cfmakeraw(struct termios *attr)
+int tcsetattr(int fd, int how, struct termios* attr)
 {
-	attr->raw=1;
-	attr->mode&=~(ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT|ENABLE_PROCESSED_INPUT);
-	attr->mode|=ENABLE_WINDOW_INPUT;
-	return 0;
-}
-
-int tcsetattr(int fd,int how,struct termios *attr)
-{
-	HANDLE h;
-	if (fd != 0) bomb(__LINE__);
-	console=*attr;
-	(void)how;
-	h=GetStdHandle(STD_INPUT_HANDLE);
-	if (h != INVALID_HANDLE_VALUE)
+	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), attr->inputMode) &&
+		SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), attr->outputMode))
 	{
-		if (!SetConsoleMode(h,attr->mode))
-		{
-			h=GetStdHandle(STD_OUTPUT_HANDLE);
-			if (h != INVALID_HANDLE_VALUE)
-			{
-				DWORD dw=2;
-				unsigned char buf[2];
-				buf[0]=0xff;
-				buf[1]=(unsigned char)(attr->raw ? 0xfe : 0xfd);
-				WriteFile(h,buf,2,&dw,NULL);
-			}
-		}
+		return 0;
 	}
-	return 0;
+
+	return -1;
 }
 
 static char read_buffer[1024];
@@ -244,6 +218,15 @@ static int scroll_first,scroll_last;
 void tty_putchar(int c)
 {
 	HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD mode;
+
+	if (GetConsoleMode(h, &mode) && (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+	{
+		char b[] = {c};
+		DWORD dw;
+		WriteConsole(h, b, 1, &dw, NULL);
+		return;
+	}
 
 	if (escape_len)
 	{
@@ -293,7 +276,6 @@ void tty_putchar(int c)
 							}
 							SetConsoleCursorPosition(h,info.dwCursorPosition);
 						}
-
 					}
 					break;
 				case 'n':
@@ -363,15 +345,15 @@ void tty_putchar(int c)
 							{
 								WORD w=0;
 
-if (info.wAttributes & FOREGROUND_RED) w|=BACKGROUND_RED;
-if (info.wAttributes & FOREGROUND_GREEN) w|=BACKGROUND_GREEN;
-if (info.wAttributes & FOREGROUND_BLUE) w|=BACKGROUND_BLUE;
-if (info.wAttributes & FOREGROUND_INTENSITY) w|=BACKGROUND_INTENSITY;
+								if (info.wAttributes & FOREGROUND_RED) w|=BACKGROUND_RED;
+								if (info.wAttributes & FOREGROUND_GREEN) w|=BACKGROUND_GREEN;
+								if (info.wAttributes & FOREGROUND_BLUE) w|=BACKGROUND_BLUE;
+								if (info.wAttributes & FOREGROUND_INTENSITY) w|=BACKGROUND_INTENSITY;
 
-if (info.wAttributes & BACKGROUND_RED) w|=FOREGROUND_RED;
-if (info.wAttributes & BACKGROUND_GREEN) w|=FOREGROUND_GREEN;
-if (info.wAttributes & BACKGROUND_BLUE) w|=FOREGROUND_BLUE;
-if (info.wAttributes & BACKGROUND_INTENSITY) w|=FOREGROUND_INTENSITY;
+								if (info.wAttributes & BACKGROUND_RED) w|=FOREGROUND_RED;
+								if (info.wAttributes & BACKGROUND_GREEN) w|=FOREGROUND_GREEN;
+								if (info.wAttributes & BACKGROUND_BLUE) w|=FOREGROUND_BLUE;
+								if (info.wAttributes & BACKGROUND_INTENSITY) w|=FOREGROUND_INTENSITY;
 
 								if (SetConsoleTextAttribute(h,w))
 								{
@@ -487,32 +469,22 @@ if (info.wAttributes & BACKGROUND_INTENSITY) w|=FOREGROUND_INTENSITY;
 	}
 	else
 	{
-		if (h!=INVALID_HANDLE_VALUE)
+		if (c==27)
 		{
-			DWORD mode;
-			DWORD dw=1;
-			char b=(char)c;
-			if (GetConsoleMode(h,&mode))
+			escape_buffer[escape_len++] = c;
+			escape_buffer[escape_len]=0;
+			escape_argptr=20;
+			while (escape_argptr)
 			{
-				if (b==27)
-				{
-					escape_buffer[escape_len++]=b;
-					escape_buffer[escape_len]=0;
-					escape_argptr=20;
-					while (escape_argptr)
-					{
-						escape_arg[--escape_argptr]=0;
-					}
-				}
-				else
-				{
-					WriteFile(h,&b,1,&dw,NULL);
-				}
+				escape_arg[--escape_argptr]=0;
 			}
-			else
-			{
-				WriteFile(h,&b,1,&dw,NULL);
-			}
+		}
+		else
+		{
+			DWORD dw = 1;
+			char b[] = { c };
+
+			WriteFile(h,b,1,&dw,NULL);
 		}
 	}
 }

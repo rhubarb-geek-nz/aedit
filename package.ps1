@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 50 2023-12-18 22:38:15Z rhubarb-geek-nz $
+#  $Id: package.ps1 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
@@ -237,7 +237,7 @@ EXIT %ERRORLEVEL%
 
 		try
 		{
-			Compress-Archive $ARCHLIST -DestinationPath "..\aedit-$Version-win.zip"
+			Compress-Archive $ARCHLIST -DestinationPath "..\aedit-$Version-win.zip" -Force
 		}
 		finally
 		{

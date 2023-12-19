@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 24 2022-08-28 00:40:48Z rhubarb-geek-nz $
+# $Id: Linux 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -32,8 +32,8 @@ cleanup
 trap cleanup 0
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
-HIVERS=$(echo $VERSION / 10000 | bc)
-LOVERS=$(echo $VERSION % 10000 | bc)
+HIVERS=$(echo $VERSION / 256 | bc)
+LOVERS=$(echo $VERSION % 256 | bc)
 PWD=`pwd`
 ISSLACK=false
 ISRPM=false

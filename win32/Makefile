@@ -16,9 +16,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 48 2023-12-18 20:53:56Z rhubarb-geek-nz $
+#  $Id: Makefile 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
 
-SRC=..\src\aedit.c winvt100.c tmpfile.c
+SRC=..\src\aedit.c winvt100.c
 CL=cl
 OBJDIR=obj\$(VSCMD_ARG_TGT_ARCH)
 BINDIR=bin\$(VSCMD_ARG_TGT_ARCH)
@@ -37,7 +37,7 @@ clean:
 	if exist $(OBJDIR) rmdir $(OBJDIR)
 	if exist $(BINDIR) rmdir $(BINDIR)
 
-$(APP): $(SRC) $(OBJDIR) $(BINDIR) $(RESFILE)
+$(APP): $(SRC) $(OBJDIR) $(BINDIR) $(RESFILE) termios.h
 	$(CL) 							\
 		/Fe$@ 						\
 		/Fo$(OBJDIR)\				\

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 49 2023-12-18 22:35:02Z rhubarb-geek-nz $
+ * $Id: aedit.c 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
  */
 
 /*
@@ -59,8 +59,6 @@
 #	include <io.h>
 #	include <direct.h>
 #	define TEMP_FP
-#	define tmpfile aedit_tmpfile
-extern FILE *tmpfile(void);
 #else /* _WIN32 */
 #	include <unistd.h>
 #	define HAVE_PWD_H
@@ -3703,7 +3701,6 @@ static int ed_init(void)
 #endif
 #ifdef TEMP_FP
 	cur_file.t_fp=tmpfile();
-/*	cur_file.fp=fopen("aedit.tmp","w+b");*/
 	if (!cur_file.t_fp)
 	{
 		perror("tmpfile");
@@ -3877,12 +3874,12 @@ int main(int argc,char **argv)
 
 	{
 		char *p=getenv("COLUMNS");
-		if (p && p[0]) total_cols=atol(p);
+		if (p && p[0]) total_cols=atoi(p);
 	}
 
 	{
 		char *p=getenv("LINES");
-		if (p && p[0]) total_lines=atol(p);
+		if (p && p[0]) total_lines=atoi(p);
 	}
 
 #ifdef SIGWINCH
@@ -3902,28 +3899,13 @@ int main(int argc,char **argv)
 
 	if (tty_sz(0))
 	{
-		char *p=getenv("LINES");
-		if (p)
-		{
-			if (*p)
-			{
-				total_lines=atoi(p);
-			}
-		}
-		p=getenv("COLUMNS");
-		if (p)
-		{
-			if (*p)
-			{
-				total_cols=atoi(p);
-			}
-		}
+		fprintf(stderr, "Failed to determine terminal size");
+		return 1;
 	}
 
 	if (ed_init())
 	{
-		fflush(stdout);
-		my_atexit();
+		fprintf(stderr, "Failed to initialise editor");
 		return 1;
 	}
 
