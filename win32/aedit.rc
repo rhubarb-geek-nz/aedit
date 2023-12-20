@@ -13,9 +13,9 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "Comments", "ISIS alter style text editor\0"
+            VALUE "Comments", "See https://aedit.sf.net\0"
             VALUE "CompanyName", "rhubarb-geek-nz\0"
-            VALUE "FileDescription", "Simple console text editor\0"
+            VALUE "FileDescription", "ISIS alter style text editor\0"
             VALUE "FileVersion", DEPVERS_aedit_STR4
             VALUE "InternalName", "aedit\0"
             VALUE "LegalCopyright", "© Roger Brown. 1989-2012\0"

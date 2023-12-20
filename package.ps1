@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+#  $Id: package.ps1 54 2023-12-20 21:22:08Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
@@ -40,6 +40,20 @@ $Version = "1.1.$VersionHigh.$VersionLow"
 if ($IsLinux)
 {
 	& make clean
+
+	If ( $LastExitCode -ne 0 )
+	{
+		Exit $LastExitCode
+	}
+
+	& make CFLAGS="-Wall -Werror" aedit
+
+	If ( $LastExitCode -ne 0 )
+	{
+		Exit $LastExitCode
+	}
+
+	& strip aedit
 
 	If ( $LastExitCode -ne 0 )
 	{
