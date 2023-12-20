@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Darwin 55 2023-12-20 23:00:05Z rhubarb-geek-nz $
+# $Id: Darwin 56 2023-12-20 23:07:05Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -39,7 +39,7 @@ cleanup
 
 umask 022
 
-mkdir -p bom/bin bom/man/man1
+mkdir -p bom/bin bom/share/man/man1
 cp aedit bom/bin
-gzip < aedit.1 > bom/man/man1/aedit.1.gz
+gzip < aedit.1 > bom/share/man/man1/aedit.1.gz
 pkgbuild --root bom --identifier net.sf.aedit --version "$VERSION" --install-location /usr/local --sign "Developer ID Installer: $APPLE_DEVELOPER" "$PKGNAME.pkg"
