@@ -74,7 +74,7 @@ The editor uses modes while showing the menu of options directly on screen.
 
 While the main menu is showing you can use the cursor keys to navigate the file.
 
-### Main menu
+### Main Menu
 
 | menu | key | function |
 | ---- | ----| ---------|
@@ -89,7 +89,7 @@ While the main menu is showing you can use the cursor keys to navigate the file.
 | Length | `l` | show length of file |
 | Quit | `q` | go to the quit options |
 | Replace | `r` | replace one string with another |
-| ?replace | `?` | opionally replace a string |
+| ?replace | `?` | optionally replace a string |
 | Shell | `s` | run command prompt |
 | View | `v` | redraw the screen |
 | Xchange | `x` | overwrite text entry mode, exit with `end` |
@@ -102,7 +102,7 @@ While the main menu is showing you can use the cursor keys to navigate the file.
 | Buffer | `b` | copy data to internal buffer |
 | Copy | `c` | copy data to a file |
 | Delete | `d` | remove the text |
-| Put | `p` | write text to file and remove test |
+| Put | `p` | write text to file and remove text |
 
 ### Quit Menu
 

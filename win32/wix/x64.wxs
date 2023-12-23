@@ -17,12 +17,20 @@
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="System64Folder" Name="System64Folder" />
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="COMPANYDIR" Name="rhubarb-geek-nz">
+          <Directory Id="INSTALLDIR" Name="aedit" />
+        </Directory>
+      </Directory>
     </Directory>
   </Fragment>
   <Fragment>
     <ComponentGroup Id="ProductComponents">
       <Component Id="aedit.exe" Guid="*" Directory="System64Folder" Win64="yes">
         <File Id="aedit.exe" KeyPath="yes" Source="bin\x64\aedit.exe" />
+      </Component>
+      <Component Id="aedit.chm" Guid="*" Directory="INSTALLDIR" Win64="yes">
+        <File Id="aedit.chm" KeyPath="yes" Source="htmlhelp\aedit.chm" />
       </Component>
     </ComponentGroup>
   </Fragment>
