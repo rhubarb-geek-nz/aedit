@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Building</Title>
+</HEAD>
+<BODY>
+<H1>Building</H1>
+<P>Source available at <A HREF="https://aedit.sf.net">sourceforge</A> or <A HREF="https://github.com/rhubarb-geek-nz/aedit">github</A>.</P>
+<P>This is not a configure/make/make install type of project. The output of the build process is a package that can be installed.</P>
+<P>On osx or linux make can be used. The output should be a package if supported by the build system. The osx build process should build both an arm and x86_64 suitable package.</P>
+<P>On alpine or archlinux then the host build system should be used.</P>
+<P>On Windows the PowerShell script should be used. This will enumerate through the architectures setting up the build environment and creating</P>
+<UL>
+<LI>signed EXE executable</LI>
+<LI>signed MSI package</LI>
+<LI>signed MSIX package</LI>
+<LI>signed MSIX bundle</LI>
+<LI>zip containing the EXE for each architecture</LI>
+</UL>
+<P>Visual Studio Community edition is required.</P>
+</BODY>
+</HTML>
