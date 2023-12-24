@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: FreeBSD 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+# $Id: FreeBSD 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -37,10 +37,11 @@ trap cleanup 0
 
 cleanup
 
-mkdir -p root/usr/bin
+mkdir -p root/usr/bin root/usr/share/man/man1
 
 cp aedit root/usr/bin
 strip root/usr/bin/aedit
+gzip < aedit.1 > root/usr/share/man/man1/aedit.1.gz
 
 cat > MANIFEST <<EOF
 name $PKGNAME
@@ -53,6 +54,9 @@ maintainer rhubarb-geek-nz@users.sourceforge.net
 prefix /usr
 EOF
 
-echo bin/aedit > PLIST
+cat > PLIST <<EOF
+bin/aedit
+share/man/man1/aedit.1.gz
+EOF
 
 pkg create -M MANIFEST -o . -r root -v -p PLIST

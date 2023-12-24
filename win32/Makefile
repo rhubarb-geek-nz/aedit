@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 57 2023-12-23 02:59:14Z rhubarb-geek-nz $
+#  $Id: Makefile 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
 
 SRC=..\src\aedit.c winvt100.c
 CL=cl
@@ -58,6 +58,7 @@ $(APP): $(SRC) $(OBJDIR) $(BINDIR) $(RESFILE) termios.h
 		/INCREMENTAL:NO				\
 		/PDB:NONE					\
 		/SUBSYSTEM:CONSOLE			\
+		user32.lib					\
 		/DEF:aedit.def				\
 		$(RESFILE)
 	del "$(BINDIR)\aedit.exp"

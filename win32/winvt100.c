@@ -20,7 +20,7 @@
  */
 
  /*
-  * $Id: winvt100.c 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+  * $Id: winvt100.c 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
   */
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -32,6 +32,7 @@
 #include <termios.h>
 
 extern void winch(int);
+static HGLOBAL aedit_clipboard; // Windows 10 IoT
 
 void bomb(int line)
 {
@@ -68,6 +69,12 @@ int cfmakeraw(struct termios* attr)
 
 int tcsetattr(int fd, int how, struct termios* attr)
 {
+	if (aedit_clipboard)
+	{
+		GlobalFree(aedit_clipboard);
+		aedit_clipboard = NULL;
+	}
+
 	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), attr->inputMode) &&
 		SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), attr->outputMode))
 	{
@@ -506,4 +513,194 @@ int tty_winsize(int *cols,int *rows)
 	}
 
 	return -1;
+}
+
+void clipboard_write(int(* ed_at)(long), long pos, long len)
+{
+	BOOL bClipboard = OpenClipboard(NULL);
+
+	if (bClipboard || (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+	{
+		__try
+		{
+			long lines = 0;
+			long pos2 = pos;
+			long len2 = len;
+			char* p;
+			HGLOBAL hglbCopy;
+
+			while (len2--)
+			{
+				if ('\n' == ed_at(pos2++))
+				{
+					lines++;
+				}
+			}
+
+			hglbCopy = GlobalAlloc(GMEM_MOVEABLE, 1 + len + lines);
+
+			if (hglbCopy)
+			{
+				p = GlobalLock(hglbCopy);
+
+				if (p)
+				{
+					while (len--)
+					{
+						int ch = ed_at(pos++);
+
+						if (ch == '\n')
+						{
+							*p++ = '\r';
+						}
+
+						*p++ = ch;
+					}
+
+					*p = 0;
+
+					GlobalUnlock(hglbCopy);
+
+					if (bClipboard)
+					{
+						EmptyClipboard();
+
+						SetClipboardData(CF_TEXT, hglbCopy);
+					}
+					else
+					{
+						if (aedit_clipboard)
+						{
+							GlobalFree(aedit_clipboard);
+						}
+
+						aedit_clipboard = hglbCopy;
+					}
+				}
+			}
+		}
+		__finally
+		{
+			if (bClipboard)
+			{
+				CloseClipboard();
+			}
+		}
+	}
+}
+
+long clipboard_length(void)
+{
+	long result = -1L;
+
+	if (aedit_clipboard || IsClipboardFormatAvailable(CF_TEXT))
+	{
+		BOOL bClipboard = OpenClipboard(NULL);
+
+		if (bClipboard || (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+		{
+			__try
+			{
+				HGLOBAL hglb = bClipboard ? GetClipboardData(CF_TEXT) : aedit_clipboard;
+
+				if (hglb != NULL)
+				{
+					size_t size = GlobalSize(hglb);
+
+					if (size)
+					{
+						const char* lptstr = GlobalLock(hglb);
+
+						if (lptstr)
+						{
+							result = 0;
+
+							while (size-- && lptstr[0])
+							{
+								if (size && lptstr[0] == '\r' && lptstr[1] == '\n')
+								{
+									size--;
+									lptstr++;
+								}
+
+								lptstr++;
+								result++;
+							}
+
+							GlobalUnlock(hglb);
+						}
+					}
+				}
+			}
+			__finally
+			{
+				if (bClipboard)
+				{
+					CloseClipboard();
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+FILE* clipboard_open(void)
+{
+	FILE* fp = NULL;
+	
+	if (aedit_clipboard || IsClipboardFormatAvailable(CF_TEXT))
+	{
+		BOOL bClipboard = OpenClipboard(NULL);
+
+		if (bClipboard || (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+		{
+			__try
+			{
+				HGLOBAL hglb = bClipboard ? GetClipboardData(CF_TEXT) : aedit_clipboard;
+
+				if (hglb != NULL)
+				{
+					size_t size = GlobalSize(hglb);
+
+					if (size)
+					{
+						const char* lptstr = GlobalLock(hglb);
+
+						if (lptstr)
+						{
+							fp = tmpfile();
+
+							if (fp)
+							{
+								while (size-- && lptstr[0])
+								{
+									if (size && lptstr[0] == '\r' && lptstr[1] == '\n')
+									{
+										size--;
+										lptstr++;
+									}
+
+									fputc(*lptstr++, fp);
+								}
+
+								fseek(fp, 0L, SEEK_SET);
+							}
+
+							GlobalUnlock(hglb);
+						}
+					}
+				}
+			}
+			__finally
+			{
+				if (bClipboard)
+				{
+					CloseClipboard();
+				}
+			}
+		}
+	}
+
+	return fp;
 }

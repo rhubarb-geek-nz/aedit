@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: NetBSD 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+# $Id: NetBSD 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
@@ -37,10 +37,11 @@ trap cleanup 0
 
 cleanup
 
-mkdir -p root/usr/bin meta
+mkdir -p root/usr/bin root/usr/share/man/man1 meta
 
 cp aedit root/usr/bin
 strip root/usr/bin/aedit
+cp aedit.1 root/usr/share/man/man1
 
 (
 	echo HOMEPAGE=http://aedit.sf.net
@@ -53,6 +54,7 @@ strip root/usr/bin/aedit
 cat > meta/CONTENTS << EOF
 @name aedit-$VERSION
 usr/bin/aedit
+usr/share/man/man1/aedit.1
 EOF
 
 echo "Text Editor based on Intel ISIS-II aedit" >"meta/COMMENT"

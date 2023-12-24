@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 54 2023-12-20 21:22:08Z rhubarb-geek-nz $
+# $Id: Linux 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -182,6 +182,10 @@ then
 	mkdir -p data/usr/bin data/install data/root
 	cp aedit data/usr/bin
 	strip data/usr/bin/aedit
+	mv data/usr/share/man data/usr/man
+	mv data/usr/share/doc data/usr/doc
+	rmdir data/usr/share
+	mv "data/usr/doc/$PKGNAME" "data/usr/doc/$PKGNAME-$VERSION"
 
 	cat > data/install/slack-desc <<EOF
 $PKGNAME: aedit ISIS-II style text editor
@@ -211,5 +215,5 @@ EOF
 			;;
 	esac
 	
-	tar --create --owner=0 --group=0 --gzip --file "$PKGNAME-$VERSION-$ARCH-1_slack$OSVER.tgz" -C data/root . -C .. usr/bin/aedit usr/share/doc/aedit usr/share/man/man1/aedit.1.gz install/slack-desc
+	tar --create --owner=0 --group=0 --gzip --file "$PKGNAME-$VERSION-$ARCH-1_slack$OSVER.tgz" -C data/root . -C .. usr/bin/aedit "usr/doc/$PKGNAME-$VERSION" usr/man/man1/aedit.1.gz install/slack-desc
 fi

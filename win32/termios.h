@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: termios.h 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+ * $Id: termios.h 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
  */
 
 struct termios
@@ -53,3 +53,7 @@ int tty_kbhit(void);
 int tty_read(int,char *,int);
 
 int tty_winsize(int *cols,int *rows);
+
+void clipboard_write(int(*)(long), long, long);
+FILE* clipboard_open(void);
+long clipboard_length(void);

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+ * $Id: aedit.c 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
  */
 
 /*
@@ -387,7 +387,11 @@ long page_start;
 
 static char *filename;
 static int chars_per_line[max_lines];
+#ifdef _WIN32
+static char* clip_name = "clipboard:";
+#else
 static char *clip_name="clipbrd.tmp";
+#endif
 
 #ifndef MALLOC_SIZE
 static char curfbuf[8192];
@@ -3160,6 +3164,15 @@ static void save_select(char *file)
 		p=sel_pos;
 	}
 
+#ifdef _WIN32
+	if (file == clip_name)
+	{
+		clipboard_write(ed_at, p, i);
+
+		return;
+	}
+#endif
+
 	fptr=fopen(file,"w");
 
 	if (fptr) 
@@ -3224,24 +3237,43 @@ static char * enter_fname(char *fstr)
 
 static void do_get(char *file)
 {
-	FILE *fptr;
+	FILE *fptr = NULL;
 	long p=ed_pos();
 	long i=0;
 	struct stat s;
 
 	if ((file==NULL) || !file[0]) return;
 
-	if (stat(file,&s))
+#ifdef _WIN32
+	if (file == clip_name)
 	{
-		return;
-	}
+		long length = clipboard_length();
 
-	if (ed_reserve((long)s.st_size))
+		if (length < 1) return;
+
+		if (ed_reserve(length))
+		{
+			return;
+		}
+
+		fptr = clipboard_open();
+	}
+#endif
+
+	if (!fptr)
 	{
-		return;
-	}
+		if (stat(file, &s))
+		{
+			return;
+		}
 
-	fptr=fopen(file,"r");
+		if (ed_reserve((long)s.st_size))
+		{
+			return;
+		}
+
+		fptr = fopen(file, "r");
+	}
 
 	if (!fptr) return;
 
@@ -3853,22 +3885,6 @@ int main(int argc,char **argv)
 	if (pw) 
 	{
 		clip_name=strjoin("/",pw->pw_dir,".aedit.clp",NULL);
-	}
-#else
-#	ifdef _WIN32
-	const char *homedir=getenv("USERPROFILE");
-#	else
-	const char *homedir=getenv("HOME");
-#	endif
-	if (homedir)
-	{
-		clip_name=strjoin(
-#ifdef _WIN32
-			"\\",
-#else
-			"/",
-#endif
-			homedir,".aedit.clp",NULL);
 	}
 #endif
 
