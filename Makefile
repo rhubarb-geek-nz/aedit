@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 45 2023-12-18 02:15:06Z rhubarb-geek-nz $
+#  $Id: Makefile 64 2023-12-25 09:53:39Z rhubarb-geek-nz $
 
 all: dist
 
@@ -31,3 +31,22 @@ config.h: configure
 
 clean:
 	rm -rf aedit config.h *.pkg *.deb *.rpm *.tgz *.txz *.pub
+
+install: aedit
+	if test -n "$(INSTALL)"; \
+	then \
+		$(INSTALL) -d "$(DESTDIR)/usr/bin"; \
+	else \
+		install -d "$(DESTDIR)/usr/bin"; \
+	fi
+	if test -n "$(INSTALL_PROGRAM)"; \
+	then \
+		$(INSTALL_PROGRAM) aedit "$(DESTDIR)/usr/bin/aedit"; \
+	else \
+		if test -n "$(INSTALL)"; \
+		then \
+			$(INSTALL) aedit "$(DESTDIR)/usr/bin/aedit"; \
+		else \
+			install aedit "$(DESTDIR)/usr/bin/aedit"; \
+		fi; \
+	fi

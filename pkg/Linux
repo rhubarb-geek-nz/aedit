@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
+# $Id: Linux 64 2023-12-25 09:53:39Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -38,6 +38,7 @@ PWD=`pwd`
 ISSLACK=false
 ISRPM=false
 ISDEB=false
+ISIPK=false
 
 for d in $( . /etc/os-release ; echo $ID $ID_LIKE )
 do
@@ -50,6 +51,9 @@ do
 			;;
 		slackware )
 			ISSLACK=true
+			;;
+		openwrt )
+			ISIPK=true
 			;;
 	esac
 done
@@ -108,7 +112,7 @@ gzip < aedit.1 > "data/usr/share/man/man1/aedit.1.gz"
 if $ISDEB
 then
 	DPKGARCH=$(dpkg --print-architecture)
-	SIZE=$(du -sk data/usr/bin/aedit | while read A B; do echo $A; done)
+	SIZE=$(du -sk data/usr | while read A B; do echo $A; done)
 	mkdir data/DEBIAN
 	cat > data/DEBIAN/control <<EOF
 Package: $PKGNAME
@@ -216,4 +220,37 @@ EOF
 	esac
 	
 	tar --create --owner=0 --group=0 --gzip --file "$PKGNAME-$VERSION-$ARCH-1_slack$OSVER.tgz" -C data/root . -C .. usr/bin/aedit "usr/doc/$PKGNAME-$VERSION" usr/man/man1/aedit.1.gz install/slack-desc
+fi
+
+if $ISIPK
+then
+	(
+		set -e
+		cd data
+
+		OPKGARCH=$( . /etc/os-release ; echo $OPENWRT_ARCH )
+		SIZE=$(du -sk usr/bin/aedit | while read A B; do echo $A; done)
+		cat > control <<EOF
+Package: $PKGNAME
+Version: $VERSION
+Architecture: $OPKGARCH
+Installed-Size: $SIZE
+Maintainer: rhubarb-geek-nz@users.sourceforge.net
+Section: editors
+Priority: extra
+Description: Aedit editor
+ Text editor based resembling ISIS alter.
+ .
+EOF
+
+		echo 2.0 > debian-binary
+
+		tar --create --owner=0 --group=0 --gzip --file control.tar.gz control
+
+		tar --create --owner=0 --group=0 --gzip --file data.tar.gz usr/bin/aedit
+
+		tar --create --owner=0 --group=0 --gzip --file ../"$PKGNAME"_"$VERSION"_"$OPKGARCH".ipk debian-binary control.tar.gz data.tar.gz
+
+		rm control debian-binary
+	)
 fi
