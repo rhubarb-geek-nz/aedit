@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 64 2023-12-25 09:53:39Z rhubarb-geek-nz $
+# $Id: Linux 65 2023-12-27 01:57:47Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -245,11 +245,11 @@ EOF
 
 		echo 2.0 > debian-binary
 
-		tar --create --owner=0 --group=0 --gzip --file control.tar.gz control
+		tar --create --owner=0 --group=0 --gzip --file control.tar.gz ./control
 
-		tar --create --owner=0 --group=0 --gzip --file data.tar.gz usr/bin/aedit
+		tar --create --owner=0 --group=0 --gzip --file data.tar.gz ./usr/bin/aedit
 
-		tar --create --owner=0 --group=0 --gzip --file ../"$PKGNAME"_"$VERSION"_"$OPKGARCH".ipk debian-binary control.tar.gz data.tar.gz
+		tar --create --owner=0 --group=0 --gzip --file ../"$PKGNAME"_"$VERSION"_"$OPKGARCH".ipk ./debian-binary ./control.tar.gz ./data.tar.gz
 
 		rm control debian-binary
 	)

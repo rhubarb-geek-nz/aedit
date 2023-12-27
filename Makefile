@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 64 2023-12-25 09:53:39Z rhubarb-geek-nz $
+#  $Id: Makefile 65 2023-12-27 01:57:47Z rhubarb-geek-nz $
 
 all: dist
 
@@ -30,7 +30,7 @@ config.h: configure
 	CFLAGS="$(CFLAGS)" ./configure
 
 clean:
-	rm -rf aedit config.h *.pkg *.deb *.rpm *.tgz *.txz *.pub
+	rm -rf aedit config.h *.pkg *.deb *.rpm *.tgz *.txz *.pub *.ipk
 
 install: aedit
 	if test -n "$(INSTALL)"; \
