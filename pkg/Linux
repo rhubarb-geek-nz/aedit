@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 65 2023-12-27 01:57:47Z rhubarb-geek-nz $
+# $Id: Linux 66 2023-12-30 01:46:52Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -39,24 +39,33 @@ ISSLACK=false
 ISRPM=false
 ISDEB=false
 ISIPK=false
+ISTERMUX=false
 
-for d in $( . /etc/os-release ; echo $ID $ID_LIKE )
-do
-	case "$d" in
-		debian )
-			ISDEB=true
-			;;
-		fedora | centos | rhel | mariner | suse | opensuse )
-			ISRPM=true
-			;;
-		slackware )
-			ISSLACK=true
-			;;
-		openwrt )
-			ISIPK=true
-			;;
-	esac
-done
+if test -f /etc/os-release
+then
+	for d in $( . /etc/os-release ; echo $ID $ID_LIKE )
+	do
+		case "$d" in
+			debian )
+				ISDEB=true
+				;;
+			fedora | centos | rhel | mariner | suse | opensuse )
+				ISRPM=true
+				;;
+			slackware )
+				ISSLACK=true
+				;;
+			openwrt )
+				ISIPK=true
+				;;
+		esac
+	done
+fi
+
+if test -n "$TERMUX_MAIN_PACKAGE_FORMAT"
+then
+	ISTERMUX=true
+fi
 
 VERSION="1.1.$HIVERS.$LOVERS"
 PKGNAME=aedit
@@ -64,6 +73,8 @@ PKGNAME=aedit
 mkdir -p data/usr/bin rpms "data/usr/share/doc/$PKGNAME" "data/usr/share/man/man1"
 
 cp aedit data/usr/bin
+
+strip data/usr/bin/aedit
 
 sed --quiet < src/aedit.c '/\*\*\*\*/,/^ \*\//p' | grep -v '\*\*\*' | grep -v '^ \*/' | while read A B
 do
@@ -183,9 +194,7 @@ fi
 
 if $ISSLACK
 then
-	mkdir -p data/usr/bin data/install data/root
-	cp aedit data/usr/bin
-	strip data/usr/bin/aedit
+	mkdir -p data/install data/root
 	mv data/usr/share/man data/usr/man
 	mv data/usr/share/doc data/usr/doc
 	rmdir data/usr/share
@@ -252,5 +261,50 @@ EOF
 		tar --create --owner=0 --group=0 --gzip --file ../"$PKGNAME"_"$VERSION"_"$OPKGARCH".ipk ./debian-binary ./control.tar.gz ./data.tar.gz
 
 		rm control debian-binary
+	)
+fi
+
+if $ISTERMUX && test "debian" = "$TERMUX_MAIN_PACKAGE_FORMAT" && test -n "$PREFIX"
+then
+	(
+		set -e
+
+		cd data
+
+		if test "$PREFIX" != "/usr"
+		then
+			mkdir -p ".$PREFIX"
+
+			mv usr/* ".$PREFIX"
+
+			rmdir usr
+		fi
+
+		DPKGARCH=$(dpkg --print-architecture)
+		SIZE=$(du -sk ".$PREFIX" | while read A B; do echo $A; done)
+		cat > control <<EOF
+Package: $PKGNAME
+Version: $VERSION
+Architecture: $DPKGARCH
+Installed-Size: $SIZE
+Maintainer: rhubarb-geek-nz@users.sourceforge.net
+Section: editors
+Priority: extra
+Description: Aedit editor
+ Text editor based resembling ISIS alter.
+ .
+EOF
+
+		echo 2.0 > debian-binary
+
+		tar --create --owner=0 --group=0 --gzip --file control.tar.gz ./control
+
+		tar --create --owner=0 --group=0 --gzip --file data.tar.gz ".$PREFIX/bin/aedit" ".$PREFIX/share/doc/$PKGNAME" ".$PREFIX/share/man/man1/aedit.1.gz"
+
+		ar r "$PKGNAME"_"$VERSION"_"$DPKGARCH".deb debian-binary control.tar.gz data.tar.gz
+
+		rm control debian-binary
+
+		mv *.deb ..
 	)
 fi
