@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 66 2023-12-30 01:46:52Z rhubarb-geek-nz $
+# $Id: Linux 67 2023-12-31 06:36:41Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -31,7 +31,7 @@ cleanup
 
 trap cleanup 0
 
-VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
+VERSION=$(grep "Id: aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
 HIVERS=$(echo $VERSION / 256 | bc)
 LOVERS=$(echo $VERSION % 256 | bc)
 PWD=`pwd`
@@ -270,6 +270,8 @@ then
 		set -e
 
 		cd data
+
+		patchelf --remove-rpath "usr/bin/aedit"
 
 		if test "$PREFIX" != "/usr"
 		then
