@@ -20,7 +20,7 @@
  */
 
  /*
-  * $Id: winvt100.c 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
+  * $Id: winvt100.c 68 2024-01-17 08:19:00Z rhubarb-geek-nz $
   */
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -65,23 +65,6 @@ int cfmakeraw(struct termios* attr)
 	attr->inputMode |= ENABLE_WINDOW_INPUT;
 //	attr->outputMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	return 0;
-}
-
-int tcsetattr(int fd, int how, struct termios* attr)
-{
-	if (aedit_clipboard)
-	{
-		GlobalFree(aedit_clipboard);
-		aedit_clipboard = NULL;
-	}
-
-	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), attr->inputMode) &&
-		SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), attr->outputMode))
-	{
-		return 0;
-	}
-
-	return -1;
 }
 
 static char read_buffer[1024];
@@ -222,19 +205,15 @@ static int escape_arg[20];
 static int escape_argptr;
 static int scroll_first,scroll_last;
 
-void tty_putchar(int c)
+static void putchar_direct(HANDLE h, int c)
 {
-	HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD mode;
+	char b[] = { c };
+	DWORD dw;
+	WriteConsole(h, b, 1, &dw, NULL);
+}
 
-	if (GetConsoleMode(h, &mode) && (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-	{
-		char b[] = {c};
-		DWORD dw;
-		WriteConsole(h, b, 1, &dw, NULL);
-		return;
-	}
-
+static void putchar_cooked(HANDLE h, int c)
+{
 	if (escape_len)
 	{
 		if (escape_len==2)
@@ -494,6 +473,45 @@ void tty_putchar(int c)
 			WriteFile(h,b,1,&dw,NULL);
 		}
 	}
+}
+
+static void putchar_switch(HANDLE h, int c)
+{
+	DWORD mode;
+
+	if (GetConsoleMode(h, &mode) && (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+	{
+		putchar_direct(h, c);
+	}
+	else
+	{
+		putchar_cooked(h, c);
+	}
+}
+
+static void (*putchar_redirect)(HANDLE h, int c) = putchar_switch;
+
+void tty_putchar(int c)
+{
+	putchar_redirect(GetStdHandle(STD_OUTPUT_HANDLE), c);
+}
+
+int tcsetattr(int fd, int how, struct termios* attr)
+{
+	if (aedit_clipboard)
+	{
+		GlobalFree(aedit_clipboard);
+		aedit_clipboard = NULL;
+	}
+
+	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), attr->inputMode) &&
+		SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), attr->outputMode))
+	{
+		putchar_redirect = (attr->outputMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) ? putchar_direct : putchar_cooked;
+		return 0;
+	}
+
+	return -1;
 }
 
 int tty_winsize(int *cols,int *rows)
