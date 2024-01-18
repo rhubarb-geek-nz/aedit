@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 59 2023-12-24 13:00:07Z rhubarb-geek-nz $
+ * $Id: aedit.c 69 2024-01-18 22:39:16Z rhubarb-geek-nz $
  */
 
 /*
@@ -390,7 +390,10 @@ static int chars_per_line[max_lines];
 #ifdef _WIN32
 static char* clip_name = "clipboard:";
 #else
-static char *clip_name="clipbrd.tmp";
+static char *clip_name = ".aedit.clp";
+#	ifdef TEMP_FP
+static FILE *clip_fp;
+#	endif
 #endif
 
 #ifndef MALLOC_SIZE
@@ -3147,7 +3150,7 @@ static void insert_text(void)
 static void save_select(char *file)
 {
 	FILE *fptr;
-	unsigned int i;
+	unsigned long i;
 	long p=ed_pos();
 
 	if ((file==NULL) || !file[0]) return;
@@ -3175,6 +3178,18 @@ static void save_select(char *file)
 
 	fptr=fopen(file,"w");
 
+#if defined(TEMP_FP) && !defined(_WIN32)
+	if ((fptr == NULL) && (file == clip_name))
+	{
+		if (clip_fp)
+		{
+			fclose(clip_fp);
+		}
+		clip_fp = tmpfile();
+		fptr = clip_fp;
+	}
+#endif /* TEMP_FP && !_WIN32 */
+
 	if (fptr) 
 	{
 		while (i--) 
@@ -3182,7 +3197,13 @@ static void save_select(char *file)
 			putc(ed_at(p),fptr);
 			p++;
 		}
-		fclose(fptr);
+
+#if defined(TEMP_FP) && !defined(_WIN32)
+		if (fptr != clip_fp)
+#endif /* TEMP_FP && !_WIN32 */
+		{
+			fclose(fptr);
+		}
 	}
 }
 
@@ -3244,9 +3265,9 @@ static void do_get(char *file)
 
 	if ((file==NULL) || !file[0]) return;
 
-#ifdef _WIN32
 	if (file == clip_name)
 	{
+#ifdef _WIN32
 		long length = clipboard_length();
 
 		if (length < 1) return;
@@ -3257,8 +3278,21 @@ static void do_get(char *file)
 		}
 
 		fptr = clipboard_open();
+#else /* !_WIN32 */
+#	ifdef TEMP_FP
+		if (clip_fp)
+		{
+			if (ed_reserve(ftell(clip_fp)))
+			{
+				return;
+			}
+
+			fptr = clip_fp;
+			rewind(fptr);			
+		}
+#	endif /* TEMP_FP */
+#endif /* !_WIN32 */
 	}
-#endif
 
 	if (!fptr)
 	{
@@ -3284,7 +3318,12 @@ static void do_get(char *file)
 		ed_ins(c);
 	}
 
-	fclose(fptr);
+#if defined(TEMP_FP) && !defined(_WIN32)
+	if (fptr != clip_fp)
+#endif /* TEMP_FP && !_WIN32 */
+	{
+		fclose(fptr);
+	}
 
 	sel_pos=ed_pos();
 	i=sel_pos-p;
@@ -3884,7 +3923,7 @@ int main(int argc,char **argv)
 
 	if (pw) 
 	{
-		clip_name=strjoin("/",pw->pw_dir,".aedit.clp",NULL);
+		clip_name=strjoin("/",pw->pw_dir,clip_name,NULL);
 	}
 #endif
 
