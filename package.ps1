@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 54 2023-12-20 21:22:08Z rhubarb-geek-nz $
+#  $Id: package.ps1 70 2024-01-19 11:24:45Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
@@ -33,9 +33,16 @@ trap
 }
 
 [int]$VersionNumber = ( Get-Content -LiteralPath 'src/aedit.c' | ForEach-Object { if ( $_.Contains('Id: aedit.c')) { $_ } } ).Trim().Split(' ')[3]
-$VersionHigh = ( [int]($VersionNumber / 256) )
-$VersionLow = ( [int]($VersionNumber % 256) )
-$Version = "1.1.$VersionHigh.$VersionLow"
+$VersionNumberHex = $VersionNumber.ToString('X8')
+$list = @(
+	( [int32]::Parse($VersionNumberHex.Substring(0,4),[System.Globalization.NumberStyles]::HexNumber) + 1),
+	( [int32]::Parse($VersionNumberHex.Substring(4,2),[System.Globalization.NumberStyles]::HexNumber) + 1),
+	( [int32]::Parse($VersionNumberHex.Substring(6,2),[System.Globalization.NumberStyles]::HexNumber) + 0)
+)
+
+$Version = Join-String -Separator '.' -InputObject $list
+
+Write-Output "Version is $Version from $VersionNumber"
 
 if ($IsLinux)
 {
@@ -205,7 +212,8 @@ if ($IsWindows -or ( 'Desktop' -eq $PSEdition ))
 
 			$VCVARS = ( '{0}\{1}' -f $VCVARSDIR, $VCVARSARCH[$ARCH] )
 
-			$VersionInt4=$Version.Replace(".",",")
+			$VersionStr4="$Version.0"
+			$VersionInt4=$VersionStr4.Replace(".",",")
 
 			$xmlDoc = [System.Xml.XmlDocument](Get-Content "Package.appxmanifest")
 
@@ -216,7 +224,7 @@ if ($IsWindows -or ( 'Desktop' -eq $PSEdition ))
 			$xmlNode = $xmlDoc.SelectSingleNode("/man:Package/man:Identity", $nsmgr)
 
 			$xmlNode.ProcessorArchitecture = "$ARCH"
-			$xmlNode.Version = $Version
+			$xmlNode.Version = $VersionStr4
 
 			$xmlDoc.Save("$Win32Dir\AppxManifest.xml")
 
@@ -225,7 +233,7 @@ CALL "$VCVARS"
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
 NMAKE /NOLOGO clean
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
-NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint"
+NMAKE /NOLOGO DEPVERS_aedit_STR4="$VersionStr4" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint"
 EXIT %ERRORLEVEL%
 "@ | & "$env:COMSPEC"
 
@@ -238,7 +246,7 @@ EXIT %ERRORLEVEL%
 		@"
 CALL "$VCVARSDIR\$VCVARSHOST"
 IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
-NMAKE /NOLOGO DEPVERS_aedit_STR4="$Version" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint" "aedit-$Version.msixbundle"
+NMAKE /NOLOGO DEPVERS_aedit_STR4="$VersionStr4" DEPVERS_aedit_INT4="$VersionInt4" CertificateThumbprint="$CertificateThumbprint" BundleThumbprint="$BundleThumbprint" "aedit-$VersionStr4.msixbundle"
 EXIT %ERRORLEVEL%
 "@ | & "$env:COMSPEC"
 
@@ -252,6 +260,32 @@ EXIT %ERRORLEVEL%
 		try
 		{
 			Compress-Archive $ARCHLIST -DestinationPath "..\aedit-$Version-win.zip" -Force
+
+			$ARCHLIST | ForEach-Object {
+				$ARCH = $_
+				$VCVARS = ( '{0}\{1}' -f $VCVARSDIR, $VCVARSARCH[$ARCH] )
+				$EXE = "$ARCH\aedit.exe"
+
+				$MACHINE = ( @"
+@CALL "$VCVARS" > NUL:
+IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
+dumpbin /headers $EXE
+IF ERRORLEVEL 1 EXIT %ERRORLEVEL%
+EXIT %ERRORLEVEL%
+"@ | & "$env:COMSPEC" /nologo /Q | Select-String -Pattern " machine " )
+
+				$MACHINE = $MACHINE.ToString().Trim()
+
+				$MACHINE = $MACHINE.Substring($MACHINE.LastIndexOf(' ')+1)
+
+				New-Object PSObject -Property @{
+					Architecture=$ARCH;
+					Executable=$EXE;
+					Machine=$MACHINE;
+					FileVersion=(Get-Item $EXE).VersionInfo.FileVersion;
+					ProductVersion=(Get-Item $EXE).VersionInfo.ProductVersion
+				}
+			} | Format-Table -Property Architecture, Executable, Machine, FileVersion, ProductVersion
 		}
 		finally
 		{

@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: GNU 51 2023-12-19 13:39:26Z rhubarb-geek-nz $
+# $Id: GNU 70 2024-01-19 11:24:45Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -32,13 +32,14 @@ cleanup
 trap cleanup 0
 
 VERSION=$(grep "Id:\ aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
-HIVERS=$(echo $VERSION / 256 | bc)
-LOVERS=$(echo $VERSION % 256 | bc)
-PWD=`pwd`
+MAJVERS=1
+MINVERS=$(echo $VERSION / 256 + 1 | bc)
+BLDVERS=$(echo $VERSION % 256 | bc)
+PWD=$(pwd)
 
 mkdir -p data/usr/bin rpms
 
-VERSION="1.1.$HIVERS.$LOVERS"
+VERSION="$MAJVERS.$MINVERS.$BLDVERS"
 PKGNAME=aedit
 
 cp aedit data/usr/bin
