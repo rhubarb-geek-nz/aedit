@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 69 2024-01-18 22:39:16Z rhubarb-geek-nz $
+ * $Id: aedit.c 71 2024-01-19 20:13:11Z rhubarb-geek-nz $
  */
 
 /*
@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -191,6 +192,23 @@ void winch(int i)
 	{
 		signal(i,winch);	/* to let it refire */
 	}
+}
+
+static int ed_check(char *fname)
+{
+#ifdef _WIN32
+	if (access(fname, 4) < 0)
+#else
+	if (access(fname, R_OK) < 0)
+#endif
+	{
+		if (errno != ENOENT)
+		{
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 #ifdef HAVE_SIGINTERRUPT
@@ -3893,7 +3911,7 @@ static int quit(void)
 			{
 				char *fname=enter_fname("Edit file - ");
 				menu_erased=1;
-				if (fname && fname[0] && (fname != clip_name))
+				if (fname && fname[0] && (fname != clip_name) && !ed_check(fname))
 				{
 					ed_clos();
 					ed_init();
@@ -3926,6 +3944,25 @@ int main(int argc,char **argv)
 		clip_name=strjoin("/",pw->pw_dir,clip_name,NULL);
 	}
 #endif
+
+	if (argc > 1)
+	{
+		int i=1;
+
+		while (i < argc)
+		{
+			char *p=argv[i++];
+
+			if ((*p!='+')&&(*p!='-'))
+			{
+				if (ed_check(p))
+				{
+					perror(p);
+					return 1;
+				}
+			}
+		}
+	}
 
 	{
 		char *p=getenv("COLUMNS");
