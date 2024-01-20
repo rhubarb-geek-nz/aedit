@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: package.ps1 70 2024-01-19 11:24:45Z rhubarb-geek-nz $
+#  $Id: package.ps1 75 2024-01-20 09:48:46Z rhubarb-geek-nz $
 
 param(
 	$CertificateThumbprint = '601A8B683F791E51F647D34AD102C38DA4DDB65F',
@@ -283,9 +283,10 @@ EXIT %ERRORLEVEL%
 					Executable=$EXE;
 					Machine=$MACHINE;
 					FileVersion=(Get-Item $EXE).VersionInfo.FileVersion;
-					ProductVersion=(Get-Item $EXE).VersionInfo.ProductVersion
+					ProductVersion=(Get-Item $EXE).VersionInfo.ProductVersion;
+					FileDescription=(Get-Item $EXE).VersionInfo.FileDescription
 				}
-			} | Format-Table -Property Architecture, Executable, Machine, FileVersion, ProductVersion
+			} | Format-Table -Property Architecture, Executable, Machine, FileVersion, ProductVersion, FileDescription
 		}
 		finally
 		{

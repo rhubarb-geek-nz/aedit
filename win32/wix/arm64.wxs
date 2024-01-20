@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="aedit" Language="1033" Version="$(env.DEPVERS_aedit_STR4)" Manufacturer="aedit.sf.net" UpgradeCode="439DE160-3A51-463F-AEBA-4D9D35B8483D">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="arm64" Description="ISIS alter style text editor" Comments="Simple Test Editor" />
+  <Product Id="*" Name="aedit" Language="1033" Version="$(env.DEPVERS_aedit_STR4)" Manufacturer="rhubarb-geek-nz" UpgradeCode="439DE160-3A51-463F-AEBA-4D9D35B8483D">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="arm64" Description="Text Editor based on Intel ISIS-II aedit" Comments="See https://aedit.sf.net" />
     <MediaTemplate EmbedCab="yes" />
     <Feature Id="ProductFeature" Title="setup" Level="1">
       <ComponentGroupRef Id="ProductComponents" />

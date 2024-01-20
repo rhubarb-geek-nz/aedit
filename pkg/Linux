@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Linux 70 2024-01-19 11:24:45Z rhubarb-geek-nz $
+# $Id: Linux 75 2024-01-20 09:48:46Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -134,8 +134,9 @@ Installed-Size: $SIZE
 Maintainer: rhubarb-geek-nz@users.sourceforge.net
 Section: editors
 Priority: extra
-Description: Aedit editor
- Text editor based resembling ISIS alter.
+Description: Text Editor based on Intel ISIS-II aedit
+ Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter.
+ This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.
  .
 EOF
 
@@ -152,7 +153,7 @@ then
 		cd "$PWD/data"
 
 		cat <<EOF
-Summary: Aedit editor
+Summary: Text Editor based on Intel ISIS-II aedit
 Name: aedit
 Version: $VERSION
 Release: 1
@@ -161,7 +162,8 @@ License: GPL
 Prefix: /usr
 
 %description
-Text editor based on ISIS alter
+Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter.
+This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.
 
 %files
 %defattr(-,root,root)
@@ -202,7 +204,7 @@ then
 	mv "data/usr/doc/$PKGNAME" "data/usr/doc/$PKGNAME-$VERSION"
 
 	cat > data/install/slack-desc <<EOF
-$PKGNAME: aedit ISIS-II style text editor
+$PKGNAME: Text Editor based on Intel ISIS-II aedit
 $PKGNAME:
 $PKGNAME: Text editor based on interface from Intel ISIS-II aedit, which in turn
 $PKGNAME: turn was based on its big brother alter. 
@@ -248,8 +250,9 @@ Installed-Size: $SIZE
 Maintainer: rhubarb-geek-nz@users.sourceforge.net
 Section: editors
 Priority: extra
-Description: Aedit editor
- Text editor based resembling ISIS alter.
+Description: Text Editor based on Intel ISIS-II aedit
+ Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter.
+ This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.
  .
 EOF
 
@@ -293,8 +296,9 @@ Installed-Size: $SIZE
 Maintainer: rhubarb-geek-nz@users.sourceforge.net
 Section: editors
 Priority: extra
-Description: Aedit editor
- Text editor based resembling ISIS alter.
+Description: Text Editor based on Intel ISIS-II aedit
+ Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter.
+ This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.
  .
 EOF
 
