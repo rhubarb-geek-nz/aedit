@@ -60,7 +60,7 @@ Visual Studio Community edition is required.
 | Windows | pwsh | [package.ps1](package.ps1) | `exe`, `msi`, `msix`, `msixbundle`, `zip`
 | Arch Linux | makepkg | [PKGBUILD](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/pacman/PKGBUILD) | `pkg.tar.zst`
 | Alpine Linux | abuild | [APKBUILD](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/alpine/APKBUILD) | `apk`
-| Gentoo Linux | emerge | [aedit-1.0.0.ebuild](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/gentoo/app-editors/aedit/aedit-1.0.0.ebuild) | installed program |
+| Gentoo Linux | emerge | [aedit-1.1.71.ebuild](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/gentoo/app-editors/aedit/aedit-1.1.71.ebuild) | installed program |
 
 ## Usage
 
