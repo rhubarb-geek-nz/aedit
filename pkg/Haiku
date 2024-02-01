@@ -17,11 +17,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: Haiku 82 2024-02-01 10:40:39Z rhubarb-geek-nz $
+# $Id: Haiku 83 2024-02-01 11:01:04Z rhubarb-geek-nz $
 #
 
 VERSION=$(grep "Id: aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
-COPYRIGHT=$(grep Copyright src/aedit.c | head -1 | sed "y/*/ /")
+COPYRIGHT=$(grep " *  Copyright" src/aedit.c | sed "s/ \*  //")
 MAJVERS=1
 MINVERS=$(echo $VERSION / 256 + 1 | bc)
 BLDVERS=$(echo $VERSION % 256 | bc)
@@ -53,7 +53,7 @@ summary \"Text Editor based on Intel ISIS-II aedit\"
 description \"Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter. This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.\"
 packager \"rhubarb-geek-nz@users.sourceforge.net\"
 vendor \"rhubarb-geek-nz\"
-copyrights \"1989-2012, Roger Brown\"
+copyrights \"$COPYRIGHT\"
 licenses \"GNU GPL v3\"
 urls {
 	"https://aedit.sf.net"
