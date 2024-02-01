@@ -1,0 +1,76 @@
+#!/bin/sh -e
+#
+#  Copyright 2021, Roger Brown
+#
+#  This file is part of RHB aedit.
+#
+#  This program is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at your
+#  option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>
+#
+# $Id: Haiku 82 2024-02-01 10:40:39Z rhubarb-geek-nz $
+#
+
+VERSION=$(grep "Id: aedit.c" < src/aedit.c | while read A B C D E; do echo $D; done)
+COPYRIGHT=$(grep Copyright src/aedit.c | head -1 | sed "y/*/ /")
+MAJVERS=1
+MINVERS=$(echo $VERSION / 256 + 1 | bc)
+BLDVERS=$(echo $VERSION % 256 | bc)
+PWD=$(pwd)
+VERSION="$MAJVERS.$MINVERS.$BLDVERS"
+RELEASE=1
+PKGNAME=aedit
+PKGARCH=$(getarch)
+PACKAGE="$PKGNAME-$VERSION-$RELEASE-$PKGARCH.hpkg"
+
+mkdir data
+
+trap 'rm -rf data' 0
+
+(
+	set -e
+
+	mkdir -p data/bin data/documentation/man/man1
+
+	cp aedit data/bin
+	cp aedit.1 data/documentation/man/man1
+
+	cd data
+
+	echo > .PackageInfo "name $PKGNAME
+version $VERSION-$RELEASE
+architecture $PKGARCH
+summary \"Text Editor based on Intel ISIS-II aedit\"
+description \"Text editor based on interface from Intel ISIS-II aedit, which in turn was based on its big brother alter. This was originally written in the mid 80s on QNX running on an 8088, with a CBM-64 acting as the console.\"
+packager \"rhubarb-geek-nz@users.sourceforge.net\"
+vendor \"rhubarb-geek-nz\"
+copyrights \"1989-2012, Roger Brown\"
+licenses \"GNU GPL v3\"
+urls {
+	"https://aedit.sf.net"
+}
+source-urls {
+	"https://github.com/rhubarb-geek-nz/aedit.git"
+}
+flags {
+	system_package
+}
+provides {
+	$PKGNAME = $VERSION-$RELEASE
+	cmd:aedit
+}"	
+
+	package create -b "$PACKAGE"
+	package add "$PACKAGE" bin documentation
+	package list "$PACKAGE"
+	mv "$PACKAGE" ..
+)

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: aedit.c 71 2024-01-19 20:13:11Z rhubarb-geek-nz $
+ * $Id: aedit.c 82 2024-02-01 10:40:39Z rhubarb-geek-nz $
  */
 
 /*
@@ -57,9 +57,8 @@
 #endif
 
 #ifdef _WIN32
-#	include <io.h>
-#	include <direct.h>
 #	define TEMP_FP
+#	define HAVE_TERMIOS_H
 #else /* _WIN32 */
 #	include <unistd.h>
 #	define HAVE_PWD_H
@@ -94,10 +93,6 @@ char sig[]="@(#)aedit 2.0";
 #	define ADBG_LEN(len)
 #endif
 
-#ifdef _WIN32
-#	define HAVE_TERMIOS_H
-#endif
-
 #define PLOT_CTRL
 #define ANSI_SYS
 #define CLEAR_SCREEN
@@ -105,7 +100,9 @@ char sig[]="@(#)aedit 2.0";
 
 #ifdef ANSI_SYS
 #	define REVERSE
-#	define SCROLL_RGN
+#	if !defined(__HAIKU__)
+#		define SCROLL_RGN
+#	endif
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -113,13 +110,6 @@ char sig[]="@(#)aedit 2.0";
 #else /* HAVE_TERMIOS_ */
 #	include <sgtty.h>
 #endif /* HAVE_TERMIOS */
-
-#ifndef SEEK_SET
-#	define SEEK_SET    0
-#	define SEEK_CUR    1
-#	define SEEK_END	2
-	long lseek();
-#endif
 
 #ifndef PATH_MAX
 #	define PATH_MAX	80
@@ -194,13 +184,11 @@ void winch(int i)
 	}
 }
 
-static int ed_check(char *fname)
+static int ed_check(char *fname,FILE **fpOut)
 {
-#ifdef _WIN32
-	if (access(fname, 4) < 0)
-#else
-	if (access(fname, R_OK) < 0)
-#endif
+	*fpOut=fopen(fname,"r");
+
+	if (!*fpOut)
 	{
 		if (errno != ENOENT)
 		{
@@ -2222,9 +2210,8 @@ static void cls(void)
 	menu_erased=1;
 }
 
-static int init(char *fname)
+static int init(char *fname,FILE *fptr)
 {
-	FILE *fptr;
 	int c;
 
 	c=0;
@@ -2275,8 +2262,6 @@ static int init(char *fname)
 		return 0;
 	}
 
-	fptr=fopen(filename,"r");
-
 	if (!fptr) 
 	{
 		show_bottom(1);
@@ -2284,11 +2269,6 @@ static int init(char *fname)
 		return 0;
 	}
 
-/*	while (EOF!=(c=getc(fptr))) 
-	{
-		ed_ins(c);
-	}
-*/
 	ed_seof(cur_file.t_hip);
 	ed_seek(cur_file.t_hip);
 
@@ -3909,13 +3889,14 @@ static int quit(void)
 			break;
 		case 'i':
 			{
+				FILE *fp=NULL;
 				char *fname=enter_fname("Edit file - ");
 				menu_erased=1;
-				if (fname && fname[0] && (fname != clip_name) && !ed_check(fname))
+				if (fname && fname[0] && (fname != clip_name) && !ed_check(fname,&fp))
 				{
 					ed_clos();
 					ed_init();
-					init(fname);
+					init(fname,fp);
 					return 1;
 				}
 				else
@@ -3936,6 +3917,7 @@ int main(int argc,char **argv)
 {
 	int editing=0;
 	char *fn=NULL;
+	FILE *fp=NULL;
 #ifdef HAVE_PWD_H
 	struct passwd *pw=getpwuid(getuid());
 
@@ -3945,22 +3927,20 @@ int main(int argc,char **argv)
 	}
 #endif
 
+	if (argc > 2)
+	{
+		fprintf(stderr,"usage:\n\t%s [file]\n",argv[0]);
+		return 1;
+	}
+
 	if (argc > 1)
 	{
-		int i=1;
+		fn=argv[1];
 
-		while (i < argc)
+		if (ed_check(fn,&fp))
 		{
-			char *p=argv[i++];
-
-			if ((*p!='+')&&(*p!='-'))
-			{
-				if (ed_check(p))
-				{
-					perror(p);
-					return 1;
-				}
-			}
+			perror(fn);
+			return 1;
 		}
 	}
 
@@ -4006,67 +3986,12 @@ int main(int argc,char **argv)
 		total_lines=max_lines;
 	}
 
-	while (--argc) 
-	{
-		char *arg;
-		argv++;
-		arg=argv[0];
-		if (arg[0]=='-') 
-		{
-			while (*++arg) 
-			{
-				switch (*arg) 
-				{
-				case 'v':
-					total_lines=24;
-					break;
-				case 't':
-					tabs=4; 
-					break;
-				case 'w':	
-					wordwrap=0; 
-					break;
-				case 'm':
-					rev_menu=0;
-					break;
-				}
-			}
-		} 
-		else 
-		{
-			if (*arg=='+') 
-			{
-				while (*++arg) 
-				{
-					switch(*arg) 
-					{
-					case 'w':	
-						wordwrap=1; 
-						break;
-					case 'm':
-						rev_menu=1;
-						break;
-					case 't':
-						tabs=8;
-						break;
-					case 'v':
-						total_lines=25;
-						break;
-					}
-				}
-			} 
-			else 
-			{
-				fn=arg;
-			}
-		}
-	}
-
 	plot(0,0);
 	reverse(0);
 
-	if (!init(fn))
+	if (!init(fn,fp))
 	{
+		fp=NULL;
 		editing=1;
 	}
 
