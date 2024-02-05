@@ -38,7 +38,7 @@ This is not intended to be a _configure/make/make install_ type of project. The 
 
 ### Make
 
-On `haiku`, `linux`, `osx`, `qnx` or `solaris` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package.
+On `*bsd`, `haiku`, `linux`, `osx`, `qnx` or `solaris` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package.
 
 ### Host build system
 
@@ -64,7 +64,7 @@ Visual Studio Community edition is required.
 | Haiku | make | [Makefile](Makefile) | `hpkg`
 | Linux | make | [Makefile](Makefile) | `deb`, `ipk`, `rpm`, `tgz`
 | macOS | make | [Makefile](Makefile) | `pkg` with `lipo` executable containing `arm64` and `x86_64`
-| NetBSD, FreeBSD, OpenBSD | make | [Makefile](Makefile) | native package
+| DragonFly, NetBSD, FreeBSD, OpenBSD | make | [Makefile](Makefile) | native package
 | QNX | make | [Makefile](Makefile) | `qpr`
 | Solaris | make | [Makefile](Makefile) | `pkg`
 | Arch Linux | makepkg | [PKGBUILD](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/pacman/PKGBUILD) | `pkg.tar.zst`
