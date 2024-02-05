@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-# $Id: GNU 75 2024-01-20 09:48:46Z rhubarb-geek-nz $
+# $Id: GNU 86 2024-02-05 04:58:19Z rhubarb-geek-nz $
 #
 
 cleanup()
@@ -36,13 +36,58 @@ MAJVERS=1
 MINVERS=$(echo $VERSION / 256 + 1 | bc)
 BLDVERS=$(echo $VERSION % 256 | bc)
 PWD=$(pwd)
-
-mkdir -p data/usr/bin rpms
-
 VERSION="$MAJVERS.$MINVERS.$BLDVERS"
 PKGNAME=aedit
 
+mkdir -p data/usr/bin rpms "data/usr/share/doc/$PKGNAME" "data/usr/share/man/man1"
+
 cp aedit data/usr/bin
+
+strip data/usr/bin/aedit
+
+sed --quiet < src/aedit.c '/\*\*\*\*/,/^ \*\//p' | grep -v '\*\*\*' | grep -v '^ \*/' | while read A B
+do
+	echo "$B"
+done | ( 
+	while read A
+	do
+		if test -n "$A"
+		then
+			echo "$A"
+			break
+		fi
+	done
+	cat 
+) > "data/usr/share/doc/$PKGNAME/copyright"
+
+if git config --get remote.origin.url
+then
+	(
+		set -e
+		git config --get remote.origin.url
+		TZ=UTC git log --oneline src/aedit.c
+	) > "data/usr/share/doc/$PKGNAME/changelog"
+else
+	if svn info .
+	then
+		(
+			set -e
+			svn info . | grep "^URL: " | while read A B
+			do
+				echo "$B"
+			done
+			TZ=UTC svn log src/aedit.c
+		) > "data/usr/share/doc/$PKGNAME/changelog"
+	fi
+fi
+
+if test -f "data/usr/share/doc/$PKGNAME/changelog"
+then
+	gzip "data/usr/share/doc/$PKGNAME/changelog"
+fi
+
+gzip < README.md > "data/usr/share/doc/$PKGNAME/README.md.gz"
+gzip < aedit.1 > "data/usr/share/man/man1/aedit.1.gz"
 
 if dpkg --print-architecture 2>/dev/null
 then

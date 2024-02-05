@@ -34,11 +34,17 @@ This version here is a very portable C implementation, originally written on QNX
 
 ## Building
 
-This is not a _configure/make/make install_ type of project. The output of the build process is a package that can be installed.
+This is not intended to be a _configure/make/make install_ type of project. The output of the build process is a package that can be installed.
 
-On `osx` or `linux` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package.
+### Make
 
-On `alpine` or `archlinux` then the host build system should be used.
+On `haiku`, `linux`, `osx`, `qnx` or `solaris` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package.
+
+### Host build system
+
+On `alpine`, `archlinux`, `gentoo` or `solus` then the host build system should be used.
+
+### Visual Studio on Windows
 
 On `Windows` the `PowerShell` script should be used. This will enumerate through the architectures setting up the build environment and creating
 
@@ -54,13 +60,18 @@ Visual Studio Community edition is required.
 
 | os | tool | script | output
 | -- | ----- | ------ | ------
-| Linux | make | [Makefile](Makefile) | `deb`, `rpm`
-| NetBSD, FreeBSD, OpenBSD | make | [Makefile](Makefile) | native package
+| GNU Hurd | make | [Makefile](Makefile) | `deb`
+| Haiku | make | [Makefile](Makefile) | `hpkg`
+| Linux | make | [Makefile](Makefile) | `deb`, `ipk`, `rpm`, `tgz`
 | macOS | make | [Makefile](Makefile) | `pkg` with `lipo` executable containing `arm64` and `x86_64`
-| Windows | pwsh | [package.ps1](package.ps1) | `exe`, `msi`, `msix`, `msixbundle`, `zip`
+| NetBSD, FreeBSD, OpenBSD | make | [Makefile](Makefile) | native package
+| QNX | make | [Makefile](Makefile) | `qpr`
+| Solaris | make | [Makefile](Makefile) | `pkg`
 | Arch Linux | makepkg | [PKGBUILD](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/pacman/PKGBUILD) | `pkg.tar.zst`
 | Alpine Linux | abuild | [APKBUILD](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/alpine/APKBUILD) | `apk`
 | Gentoo Linux | emerge | [aedit-1.1.82.ebuild](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/gentoo/app-editors/aedit/aedit-1.1.82.ebuild) | installed program |
+| Solus | solbuild | [package.yaml](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/solus/package.yml) | `eopkg`
+| Windows | pwsh | [package.ps1](package.ps1) | `exe`, `msi`, `msix`, `msixbundle`, `zip`
 
 ## Usage
 
