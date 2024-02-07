@@ -16,17 +16,32 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
-#  $Id: Makefile 89 2024-02-07 06:00:57Z rhubarb-geek-nz $
+#  $Id: Makefile 90 2024-02-07 20:49:10Z rhubarb-geek-nz $
 
 CFLAGS=-I. -dHAVE_TMPFILE -dHAVE_TERMIOS_H= -dHAVE_PWD_H= -dHAVE_CFMAKERAW= -d0
 SRCFILES=..\src\aedit.c dosvt100.c
 HDRFILES=termios.h pwd.h
 
-all: aedit.exe
+all: aedit.exe 286\aedit.exe 386\aedit.exe
 
 clean: .SYMBOLIC
 	if exist aedit.exe del aedit.exe
+	if exist 286\aedit.exe del 286\aedit.exe
+	if exist 386\aedit.exe del 386\aedit.exe
+	if exist 286 rmdir 286
+	if exist 386 rmdir 386
 
 aedit.exe: $(SRCFILES) $(HDRFILES)
-	wcl.exe -0 -fpc $(SRCFILES) -fe=$@ $(CFLAGS)
+	wcl.exe -0 -bcl=dos -fpc $(SRCFILES) -fe=$@ $(CFLAGS)
 	del *.obj
+
+286\aedit.exe: $(SRCFILES) $(HDRFILES) 286
+	wcl.exe -2 -bcl=os2 -lp $(SRCFILES) -fe=$@ $(CFLAGS) -I$(%WATCOM)\h\os21x
+	del *.obj
+
+386\aedit.exe: $(SRCFILES) $(HDRFILES) 386
+	wcl386.exe $(SRCFILES) -fe=$@ $(CFLAGS)
+	del *.obj
+
+286 386: .SYMBOLIC
+	mkdir $@

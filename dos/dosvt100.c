@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: dosvt100.c 89 2024-02-07 06:00:57Z rhubarb-geek-nz $
+ * $Id: dosvt100.c 90 2024-02-07 20:49:10Z rhubarb-geek-nz $
  */
 
 #include <stdio.h>
@@ -30,8 +30,15 @@
 #include <conio.h>
 #include <direct.h>
 #ifdef _WIN32
+#	define WIN32_LEAN_AND_MEAN
+#	include <windows.h>
 #else
-#	include <graph.h>
+#	ifdef __OS2__
+#		define INCL_VIO
+#		include <os2.h>
+#	else
+#		include <graph.h>
+#	endif
 #endif
 #include <termios.h>
 #include <pwd.h>
@@ -51,6 +58,30 @@ int tty_winsize(int *cols,int *rows)
 		*cols=vc->numtextcols;
 	}
 	else
+#else
+#	ifdef __OS2__
+	VIOMODEINFO info;
+
+	memset(&info,0,sizeof(info));
+	info.cb=sizeof(info);
+
+	if (!VioGetMode(&info,0))
+	{
+		*cols=info.col;
+		*rows=info.row;
+	}
+	else
+#	else
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
+
+	if (h != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo(h,&info))
+	{
+		*cols=info.dwMaximumWindowSize.X;
+		*rows=info.dwMaximumWindowSize.Y;
+	}
+	else
+#	endif
 #endif
 	{
 		*cols=80;
@@ -78,7 +109,11 @@ int termios_read(int fd,char *buf,int len)
 		{
 			int code=0,arg=0;
 
+#ifdef __OS2__
+			if (ch != 0xE0)
+#else
 			if (ch)
+#endif
 			{
 				read_buffer[read_len++]=ch;
 				break;
@@ -403,3 +438,11 @@ void tty_putchar(int c)
 	putchar(c);
 #endif
 }
+
+#ifdef TIOCGWINSZ
+int tty_ioctl(int fd,int i,struct winsize *ws)
+{
+	return tty_winsize(&ws->ws_col,&ws->ws_row);
+}
+#endif
+

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: termios.h 89 2024-02-07 06:00:57Z rhubarb-geek-nz $
+ * $Id: termios.h 90 2024-02-07 20:49:10Z rhubarb-geek-nz $
  */
 
 #ifndef __TERMIOS_H__
@@ -56,11 +56,22 @@ extern int read(int,char *,int);
 extern int tty_winsize(int *,int *);
 extern int tcsetattr(int,int,const struct termios *);
 
+extern int termios_system(void);
+#define system(x) termios_system()
+
+#if defined(__OS2__) || defined(_WIN32)
+#	define	TIOCGWINSZ		1
+struct winsize { int ws_row,ws_col; };
+#define ioctl(a,b,c)	tty_ioctl(a,b,c)
+extern int tty_ioctl(int,int,struct winsize *);
+#endif
+
+#ifdef __OS2__
+#	undef SCROLL_RGN
+#endif
+
 #ifdef _WIN32
 #	undef _WIN32
 #endif
-
-extern int termios_system(void);
-#define system(x) termios_system()
 
 #endif
