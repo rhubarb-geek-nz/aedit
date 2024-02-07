@@ -38,7 +38,7 @@ This is not intended to be a _configure/make/make install_ type of project. The 
 
 ### Make
 
-On `*bsd`, `haiku`, `linux`, `osx`, `qnx` or `solaris` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package.
+On `*bsd`, `haiku`, `linux`, `osx`, `qnx` or `solaris` make can be used. The output should be a package if supported by the build system. The `osx` build process should build both an `arm` and `x86_64` suitable package. The `dos` build requires OpenWatcom C/C++.
 
 ### Host build system
 
@@ -72,6 +72,7 @@ Visual Studio Community edition is required.
 | Gentoo Linux | emerge | [aedit-1.1.82.ebuild](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/gentoo/app-editors/aedit/aedit-1.1.82.ebuild) | installed program |
 | Solus | solbuild | [package.yaml](https://sourceforge.net/p/aedit/code/HEAD/tree/branches/solus/package.yml) | `eopkg`
 | Windows | pwsh | [package.ps1](package.ps1) | `exe`, `msi`, `msix`, `msixbundle`, `zip`
+| MS-DOS | wmake | [Makefile](dos/Makefile) | `exe`
 
 ## Usage
 
